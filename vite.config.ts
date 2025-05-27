@@ -38,9 +38,11 @@ export default defineConfig({
   },
   define: {
     'process.env.VITE_API_URL': JSON.stringify(process.env.NODE_ENV === 'production'
-      ? 'https://turkish-job-connect2-mr6h9f2iq-muhammetozcan34s-projects.vercel.app'
+      ? 'https://business-tracker.onrender.com'
       : 'http://localhost:3000'
     ),
+    'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+    'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY)
   },
   server: {
     proxy: {

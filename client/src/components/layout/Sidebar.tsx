@@ -61,7 +61,7 @@ export default function Sidebar() {
               const isActive = location === item.href;
               return (
                 <Link key={item.name} href={item.href}>
-                  <a
+                  <div
                     className={cn(
                       isActive
                         ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
@@ -78,7 +78,7 @@ export default function Sidebar() {
                       )}
                     />
                     {item.name}
-                  </a>
+                  </div>
                 </Link>
               );
             })}

@@ -1,0 +1,365 @@
+Mobil Uygulama Tasarımı ve Kullanıcı Akışı Sunumu
+
+1. Giriş ve Proje Amacı
+Bu proje, hem Android hem de iOS platformlarında çalışacak, aynı zamanda masaüstü cihazlardan da erişilebilecek bir iş yönetimi uygulaması geliştirmeyi hedeflemektedir. Uygulama, bir şirketin operasyonel süreçlerini tek bir merkezden yönetmesini sağlar. Temel odak alanları şunlardır:
+Cari Hesap Takibi
+
+
+Teklif Yönetimi
+
+
+Proje Takibi
+
+
+Yapılacaklar Listesi
+
+
+Raporlama
+
+
+
+2. Ana Özellikler ve Modüller
+2.1. Cari Hesaplar
+Firma bilgileri ve şube detayları
+
+
+Yetkili kişi bilgileri
+
+
+Borç-Alacak hareketleri
+
+
+Projelere ve tekliflere bağlantı
+
+
+2.2. Teklifler
+Yeni teklif oluşturma
+
+
+Cari hesapla ilişkilendirme
+
+
+PDF çıktısı alma
+
+
+Teklif durum takibi (Onay Bekliyor, Kabul Edildi, Reddedildi)
+
+
+2.3. Projeler
+Proje başlangıç ve bitiş tarihleri
+
+
+İlgili teklifler, cari hesaplar ve görevlerle entegrasyon
+
+
+Proje durumu takibi
+
+
+2.4. Yapılacaklar
+Görev kartlarıyla takip
+
+
+Durum: Bekliyor, Devam Ediyor, Tamamlandı
+
+
+Sürükle-bırak sıralama (mobil uyumlu)
+
+
+2.5. Raporlar
+Teklif ve proje raporları
+
+
+Tarihe ve duruma göre filtreleme
+
+
+Grafik ve tablo desteği
+
+
+
+3. Arayüz Yapısı ve Görsel Tasarım
+Genel Görünüm
+Zemin: Lacivert tonlarda, gradient geçişli modern bir görünüm
+
+
+Yapı: Kart temelli, mobil dostu, sıkı yerleşimli tasarım
+
+
+Mod: Beyaz zemin (varsayılan) + Koyu Mod (opsiyonel)
+
+
+Üst Menü
+Sol: Profil ikonu – tıklandığında soldan sağa doğru tam sayfa açılır profil & ayarlar
+
+
+Orta: Dinamik arama çubuğu
+
+
+Sağ: Bildirimler (yeni görev, teklif bildirimi vb.)
+
+
+Sekmeler - (Üst menü seçimine göre )
+Sekmeye göre başlıklar: Profil ikonu
+
+Alt Menü (Sabit)
+Ana Sayfa
+
+
+Menü - (Sayfalar)
+
+
+Yeni - ( Görev Oluştur, Teklif Oluştur, Proje Oluştur, Cari Oluştur şeklinde alt alta seçim butonları)
+
+
+Orta Alan
+Sayfaya göre değişen içerik:
+
+
+Kart görünümleri
+
+
+Liste ve tablo görünümleri
+
+
+Filtrelenebilir içerik alanları
+
+
+
+
+4. Kullanıcı Akışı (Flow)
+
+1. Uygulama Açılışı
+   └─ Giriş Ekranı (Kullanıcı adı + şifre / Google ile giriş)
+       └─ Ana Sayfa (Özet, Bildirimler, Kartlarım)
+
+2. Modül Geçişleri
+   ├─ Ana Sayfa → Anasayfa (Dashboard / Grafiklerle)
+   ├─ Ana Sayfa → Cari Hesaplar
+   ├─ Ana Sayfa → Görevler
+   ├─ Ana Sayfa → Teklifler
+   ├─ Ana Sayfa → Projeler
+   ├─ Ana Sayfa → Raporlar
+   ├─ Ana Sayfa → Ayarlar
+   └─ Alt Menü ile tüm modüllere geçiş
+
+3. Profil Sayfası
+   └─ Profil İkonuna Tıklama
+       └─ Tam Sayfa Açılır: Kullanıcı Bilgileri, Ayarlar, Bildirim Tercihleri
+
+
+5. Arayüz Örnekleri
+Aşağıda olması önerilen ekranlar:
+Giriş / Kayıt Ekranı
+
+
+Ana Sayfa: Özetim, Kartlarım, Durumum alanları
+
+
+Cari Hesaplar V(Tablolu) + Cari Hesap Kayıtları 
+
+
+Teklifler Sayfası (Kart şeklinde)
+
+
+Proje Takibi Görünümü
+
+
+Yapılacaklar: Sürükle-bırak kart görünümü
+
+
+Raporlama sayfası (Filtre + grafik)
+
+
+Profil Sayfası (Tam ekran, ayarlarla birlikte)
+
+
+
+6. Not
+Maliyet: Tüm Cihazlarla uyumlu, Ücretsiz araç seçimleri olmalı
+
+
+
+
+
+Genel Bilgilendirme
+Tanım: İş Takip Mobil Uygulaması.
+Android, IOS, ve Web de çalışacak.
+
+İçerik: Kullanıcı, Cari Hesaplar, Cari Hesap Hareketleri (Borç & Alacak Takibi), Teklifler, Projeler, Yapılacaklar, Raporlar, Ayarlar
+
+Arayüz
+Modern tasarım, Buton, Kart ağırlıklı tasarım
+
+ARAMA ÇUBUĞU
+Her sayfada, Sayfa ile alakalı bilgileri arayacak dinamik bir arama çubuğu olmalı.
+
+YAZDIRMA
+Tüm formlar, Kartlar, Listeler/tablolar, Rapotrlar için, (Oluşturulan raporlar yazdırılmaya uygun form - tablo - mizan - gibi) Her veri giriş formu Standart A4 Kağıt ebadında yazdırabilmeli veya PDF dönüştürebilmeli. ve bunu modern bir form şeklinde göstermeli
+
+
+
+CARİ HESAPLAR
+Sayfa yapısı: Cari Hesaplar sayfası içinde sekmeler olmalı;
+Cari Hesap Listesi 
+(Harici Yeni Hesap Oluştur )
+(Cari Hesap Hareketleri için Yeni kayıt girişi ve liste/tablo gösterecek bir sayfada olmalı
+
+Yeni Cari Oluştur
+Yeni Cari Hesap Kartlarını oluşturabileceğim “Cari Kart Oluşturma Formu” olmalı.  Form “Cari Hesap Ekle” butonuna tıklandığında görünmeli. Varsayılan olarak “Cari Kart Oluşturma Formu” ile kaydettiğimiz, Cari Hesap Listesi gelecek. Tıklayınca oluşturma formu görünecek.
+ Cari Hesap Listeleri Listelenecek, 
+Tüm başlıklar listede görünecek.
+En fazla alt alta 15 Cari Kart listelenecek, Daha fazla varsa 2. sayfaya tıklanabilecek. birden fazla sayfa varsa sayfa numaraları ve “Tümü” seçenekleri olacak
+Listelenen Cari Kartın sonunda “İşlemler” ve “Görüntüle” butonu olacak. Görüntüle, Tıklayınca A4 kağıt ebat ve formatında Form şeklinde cari kart görünecek.
+Görüntüleye tıklandığında sağ üst köşede “Yazdır” butonu olacak.Sol üst köşede yan yana düzenlememi sağlayacak “Düzenle” butonu, Kartı silmemi sağlayacak “Sil” butonu olmalı, 
+Listede veri kayması olmaması için, kart oluştururken boş bırakılan alanlarıda boş olarak göstermelisin. Liste yaparken yoksa bu boşluklar tabloda kaymalara sebep oluyor.
+
+Cari Hesap Hareketleri (Borç & Alacak ve Projeler Takibi) 
+Oluşturulan Cari hesap kartının sonunda “Hareketler” butonu olmalı.  Hareketler butonuna tıklandığında ilgili Cari kartın Cari Hesap Hareketleri sekmesini açacak. Bu alanda; 
+ID
+Tarih
+Cari Hesap ID
+Cari Hesap Adı
+Açıklama
+Tür (Borç/Alacak)
+Tutar
+Bakiye
+
+başlıkları olacak. Projeler oluşturulduğunda bu alandaki Açıklama bölümüne (Projeler sayfasındaki) proje no ve proje adı ile eklenecek ve proje tutarı Tutar Borç olarak eklenmeli. Ayrıca Borç ve Alacak tutarları ve açıklama girebileceğim alanlar olmalı. Üst tarafta farklı bir cari hesap seçip alt tarfta cari hareket kaydı girebileceğim bir alan ve onunda altında bu hareketleri listeleyen bir alan olmalı. Bu alanda son 25 kayıt listelenmeli ve fazla kayıtlar diğer sayfaya da görüntülenmeli. Son olarak liste ekstre alıp yazdırılabilir bir dökümana dönüştürülebilmeli
+
+
+Cari Kart Oluşturma Formu özellikleri:
+Başlıklar; 
+Benzersiz ID: (Numerik) ID otomatik oluştur. (gizle)
+Firma Adı: 
+Şube/Bölge: 
+Firma Türü: Checkbox yada açılır liste (Alıcı / Satıcı)
+Yetkili Kişi: (Yetkili, birden fazla kişi olabilir. Aynı firmada farklı departman/görevdeki kişiler gibi) 
+Görevi:
+Telefonu: 
+E Posta:
+Görevler: Cari Hesaba bağlı Tamamlanmayan “Görev” adedini gösteren Görevler sütunu olacak ve bu rakama tıklandığında bu açık görevler gösterilecek (Yapılan Görevler, Tamamlanmayan Görevler ve Tüm Görevlerin filtresi uygulayabileceğim liste gösterilecek) 
+Projeler: Cari Hesaba bağlı tüm  “Projelerin” adedini gösteren Projeler sütunu olacak ve bu rakama tıklandığında bu “Devam eden” veya “Tamamlanan” ve Tüm projeler olarak filtre uygulanabilir bir liste gösterilecek
+
+
+
+
+
+TEKLİFLER 
+Sayfa yapısı
+Varsayılan olarak Teklifler Listesi gelecek. harici TEKLİF OLUŞTUR butonu olacak yanında ve bu butona tıklayınca Yeni Teklif Formu oluşturabileceğim “Teklif Oluşturma Formu” olmalı. burada oluşturulan formlar Teklifler Listelerinde görüntülenecek, 
+Teklifler Listesinde daha önce hazırlanan teklifleri düzenlememi sağlayacak “Düzenle” butonu, Teklifi silmemi sağlayacak “Sil” butonu olmalı, ve “Yazdır”  butonu
+Teklifler Listesinde Listelemeyi yan yana iki liste halinde gösterecek. 1. Listede Verilen Teklifler, 2. Listede Alınan Teklifler
+
+
+Teklif Oluşturma Formu özellikleri:
+Verilen Teklif / Alınan Teklif olarak teklifi gruplandırabileceğim bir alan olmalı. Verilen Tekliflerde Verilen teklifler, Alınan Teklif altında alınan teklifler görünecek. 
+(Bu Formu iki bölüm olarak düşünelim. İlk bölüm genel bilgileri içeren alan, ikinci bölüm ürün yada hizmet bilgilerini içeren alanlara sahip olacak.
+En üstte Dinamik arama çubuğu olacak. Cari Hesaplar sayfasındaki görünüm ile uyumlu olacak ve aynı yerde olması daha tutarlı bir sayfa görüntüsü oluşturur. Arama yapıldığında altta yan yana bulunan iki listedede dinamik şekilde sonuçlaeı listelenecek. 
+
+Başlıklar; 
+(1. Bölüm için genel bilgiler olan bölüm)
+Teklif Türü: Fiyat Teklifi - Satınalma Teklifi Check box olsun. En üstte sağda olsun. Hangisi seçilirse Sayfa Başlığı Check box ta seçilen olarak değişsin.
+Benzersiz ID: (Numerik) ID otomatik oluştur. (gizli)
+Teklif No: Ouşturulan her yeni teklif no sıralı şekilde devam edecek
+Teklif Türü: Verilen Teklif (Teklif no bu seçimde FT0001 den başlayacak. Verilen Tekliflere ekleyecek Google Sheets de açılan Verilen Teklifler sayfasına ekleyecek. Varsayılan seçili olacak) - Alınan Teklif (Alınan Tekliflere ekleyecek Google Sheets de açılan Alınan Teklifler sayfasına ekleyecek. teklif no buseçimde ST0001 den başlayacak)
+Tarih: 
+Firma Adı: CARİ HESAPLAR sayfasında oluşturduğumuz Cari Kartlardan seçilecek - açılır liste. 
+Teklif Konusu:
+Yetkili Kişi: (Yetkili, CARİ HESAPLAR sayfasında oluşturduğumuz kişilerden seçilecek - açılır liste. 
+Teklif Durumu: Açılır liste: (Beklemede, Onaylandı, Kaybedildi, İptal) 
+Ödeme Şekli: 
+Geçerlilik Süresi: 
+A. Teklifler: Çoktan Seçmeli Açılır Liste: (Bir sonraki sayfada “alınan teklifler"in seçimini yapabileceğim veri giriş alanı.
+Dosyalar: (bir veya birden çok Dosya veya dokümanların eklenip görüntülenecek Drive a bağlı) 
+(2. Bölüm için ürün hizmet bilgiler olan bölüm)
+Bu alan aşağıdaki sütun başlıklarını içeren bir tablo olmalı. Birden fazla ürün/hizmet girmek istenirse “EKLE” butonu ile alta bir satır daha ekleyerek genişletilebilir bir tablo.
+Özellikleri: 
+Ürün / Hizmet Adı:
+Miktar: Sayısal veri giriş alanı binlik ayraç (nokta ile)
+Birim: Açılır Liste: (Adet, Cilt, Koçan, Paket, Koli, Ton, Kg, g, Lt, ml, Metre)
+Birim Fiyat: Ürün fiyatı sayısal binlik ayraç (nokta ile) ve virgülden sonra 2 hane (Örn: 9.010.25 TL)
+₺/$/€: Açılır Liste: (₺/$/€) Seçilen para birimi fiyat alanlarının tamamında gösterilsin
+Tutar: “Miktar” x “Birim Fiyat” binlik ayraç (nokta ile) ve virgülden sonra 2 hane
+İskonto Tutarı: bu alan OPSİYONEL olmalı. İskonto yapılmak istenirse gösterilmeli. binlik ayraç (nokta ile) ve virgülden sonra 2 hane
+Net Tutar: Bu alan görünmeyecek! =“Tutar” - “İskonto Tutarı”
+KDV Oranı: Sayısal değer girilecek ve % işareti olacak (Örn:20%) Opsiyonel olmalı, istenirse KDV Oranı sütunu görünmeli.
+Toplam Tutar:“Net Tutar”+ (“Net Tutar” x “KDV Oranı”)
+KAYDET Butonu
+
+
+Teklif Listeleme Alanı özellikleri:
+Teklif Türü: Filtre olsun: (verilen teklifler, alınan teklifler tümü) 
+Teklif No, Tarih, Firma Adı, Teklif Konusu başlıkları ve Teklif Durumu listede görünecek. (Tablo gibi yan yana yani)
+En fazla alt alta 25 Cari Kart listelenecek, Daha fazla varsa 2. sayfaya tıklanabilecek. birden fazla sayfa varsa sayfa numaraları ve “Tümü” seçenekleri olacak
+Listelenen Teklif Listesinin sonunda her teklif kaydının sonunda Görüntüle butonu olacak. Tıklayınca ilgili Teklif Formu A4 ebat ve formatında Form şeklinde görünecek.
+Görüntüleye tıklandığında sağ üst köşede “Yazdır” butonu olacak.Sol üst köşede yan yana düzenlememi sağlayacak “Düzenle” butonu, Kartı silmemi sağlayacak “Sil” butonu olmalı, 
+Listede veri kayması olmaması için, teklif formu oluştururken boş bırakılan alanları da boş olarak göstermelisin. Liste yaparken yoksa bu boşluklar tabloda kaymalara sebep oluyor.
+
+
+
+
+PROJELER 
+Sayfa yapısı
+Proje Formu oluşturabileceğim “Proje Oluşturma Formu” olmalı
+Oluşturulan Projelerin Listeleri görüntülenecek, 
+Proje Listesinde daha önce hazırlanan Projeleri düzenlememi sağlayacak “Düzenle” butonu, Silmemi sağlayacak “Sil” butonu olmalı, ve “Print”  butonu
+
+Proje Oluşturma Formu özellikleri:
+(Bu Formu iki bölüm olarak düşünelim. İlk bölüm genel bilgileri içeren alan, ikinci bölüm ürün yada hizmet bilgilerini içeren alanlara sahip olacak.
+Başlıklar; 
+(1. Bölüm için genel bilgiler olan bölüm)
+Benzersiz ID: Numerik ID, otomatik ve gizli olacak
+Proje No: P0001 den başlayıp, oluşturulan her yeni proje no sıralı şekilde devam edecek.
+Proje Tarihi:
+Son Teslim Tarihi:
+Firma Adı: CARİ HESAPLAR sayfasında oluşturduğumuz Cari Kartlardan seçilecek - açılır liste. 
+Bağlı Olduğu Teklif No: Çoktan seçmeli açılır liste: (Bir önceki sayfamızda hazırladığımız Tekliflerdeki “Teklif No” 
+Proje Konusu: 
+Yetkili Kişi: (Yetkili, CARİ HESAPLAR sayfasında oluşturduğumuz kişilerden seçilecek - açılır liste. 
+Proje Durumu: Açılır Liste (Açık - Tamamlandı)
+Proje Tutarı:
+Ödeme Şekli:
+Dosyalar: Dosya ekleme alanı Drive
+
+(2. Bölüm için ürün hizmert bilgiler olan bölüm)
+Bu alan aşağıdaki sütun başlıklarını içeren bir tablo olmalı. Birden fazla ürün/hizmet girmek istenirse “EKLE” butonu ile alta bir satır daha ekleyerek genişlet
+Gider Adı: 
+Firma Adı: CARİ HESAPLAR sayfasında oluşturduğumuz Cari Kartlardan seçilecek - açılır liste. 
+Açıklama:
+Dosya:  Dosya ekleme alanı Drive
+Miktar: 
+Birim: Açılır Liste (Adet, Cilt, Koçan, Paket, Koli, Ton, Kg, g, Lt, ml, Metre)
+Birim Fiyat: Ürün fiyatı ve para birimi seçimi olacak bu alanda (Örn: 9.010.25 TL)
+Tutar: “Miktar” x “Birim Fİyat”
+İskonto: bu alan OPSİYONEL olmalı.
+Net Tutar: “Tutar” -  “İskonto”
+KDV Oranı: (Örn:%20)
+KDV’li Tutar:
+
+
+
+
+YAPILACAKLAR 
+Sayfa yapısı
+Sağ üst köşede Filtre olmalı: Tamamlanmış (Açık), Devam eden (Yapılıyor), Tamamlandı (Kapalı). Bu Filtrede varsayılan olarak Açık ve Yapılıyor olarak işaretlenmiş olan kayıtlar gösterilsin.
+Yeni Görev oluşturabileceğim “Görev Oluşturma Formu” olmalı
+Oluşturulan Görevlerin gösterileceği “Yapılacaklar Listesi” görüntülenecek. Listenin başında check box olmalı. Tamamlandı sütununun altında olmalı bı checkbox ve işaretlenince görev durumu tamamlandı olarak  belirtilmeli ve yapılacaklar listesinden tamamlananlar bölümüne aktarılmalı Yani Bu listede Tamamlanmamış görevleri gösterecek. Listede en fazla 25 Açık görev görünecek. daha fazlası varsa sayfalar halinde yada Tümünü göster seçeneğiyle görünecek.
+“Yapılacaklar Listesi”nde daha önce hazırlanan Görevleri düzenlememi sağlayacak “Düzenle” butonu, “Sil” butonu olmalı
+
+Görev Oluşturma Formu özellikleri:
+(Bu Formu tek satırdan oluşmalı ve mümkün olduğunca sade görünmeli)
+Başlıklar; 
+Durum: Açılır liste (Açık, Yapılıyor, Kapalı)
+Görev:
+Bağlı Olduğu Proje: Çoktan seçmeli açılır liste (Projeler veri listemizden seçim yapılacak)
+Firma: Seçilen Projeye göre, Projeler sayfamızdaki bağlı olduğu projede seçilen Firma bilgisine göre otomatik gelecek,
+Oluşturma Tarihi:
+NOT: Uzun veri giriş alanı
+
+
+RAPORLAR 
+Tarih,  Alıcı / Satıcı, Alınan Teklif / Verilen Teklif, Açık ve Tamamlanan Proje, Cari hesap ekstre, vb çeşitli rqporlar hazırlayabileceğim bir sayfa. Tüm kodları eksiksiz olarak hazırlanmalı.
+
+
+
+Talep
+ÖRNEK VERMEDEN eksiksiz ve tüm ihtiyaçlarımı karşılayacak mobil uygulama için TAM  ve Çalışan KODLARI ver. Türkçe konuş benimle. 

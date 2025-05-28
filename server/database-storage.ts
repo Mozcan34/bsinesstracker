@@ -1,13 +1,13 @@
 import {
   users, User, InsertUser,
-  accounts, Account, InsertAccount,
-  transactions, Transaction, InsertTransaction,
-  quotes, Quote, InsertQuote,
-  quoteItems, QuoteItem, InsertQuoteItem,
-  projects, Project, InsertProject,
-  tasks, Task, InsertTask,
+  cariHesaplar as accounts, CariHesap as Account, InsertCariHesap as InsertAccount,
+  cariHareketler as transactions, CariHareket as Transaction, InsertCariHareket as InsertTransaction,
+  teklifler as quotes, Teklif as Quote, InsertTeklif as InsertQuote,
+  teklifKalemleri as quoteItems, TeklifKalemi as QuoteItem, InsertTeklifKalemi as InsertQuoteItem,
+  projeler as projects, Proje as Project, InsertProje as InsertProject,
+  gorevler as tasks, Gorev as Task, InsertGorev as InsertTask,
 } from "@shared/schema";
-import { getDb } from "./db";
+import { db as getDb } from "./db";
 import { eq } from "drizzle-orm";
 import { IStorage } from "./storage";
 

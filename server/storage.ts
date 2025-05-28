@@ -6,6 +6,63 @@ import {
   type InsertProje, type InsertGorev
 } from '@shared/schema';
 
+export interface IStorage {
+  // Cari Hesaplar
+  getAllCariHesaplar(): Promise<CariHesap[]>;
+  getCariHesapById(id: number): Promise<CariHesap | undefined>;
+  createCariHesap(data: InsertCariHesap): Promise<CariHesap>;
+  updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | undefined>;
+  deleteCariHesap(id: number): Promise<boolean>;
+  searchCariHesaplar(query: string): Promise<CariHesap[]>;
+
+  // Yetkili Kişiler
+  getYetkiliKisilerByCariId(cariHesapId: number): Promise<YetkiliKisi[]>;
+  createYetkiliKisi(data: InsertYetkiliKisi): Promise<YetkiliKisi>;
+  updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined>;
+  deleteYetkiliKisi(id: number): Promise<boolean>;
+
+  // Cari Hareketler
+  getCariHareketlerByCariId(cariHesapId: number, limit?: number): Promise<CariHareket[]>;
+  createCariHareket(data: InsertCariHareket): Promise<CariHareket>;
+
+  // Teklifler
+  getAllTeklifler(): Promise<Teklif[]>;
+  getTeklifById(id: number): Promise<Teklif | undefined>;
+  createTeklif(data: InsertTeklif): Promise<Teklif>;
+  updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | undefined>;
+  deleteTeklif(id: number): Promise<boolean>;
+  getTekliflerByTur(tur: string): Promise<Teklif[]>;
+  searchTeklifler(query: string): Promise<Teklif[]>;
+
+  // Teklif Kalemleri
+  getTeklifKalemleriByTeklifId(teklifId: number): Promise<TeklifKalemi[]>;
+  createTeklifKalemi(data: InsertTeklifKalemi): Promise<TeklifKalemi>;
+  deleteTeklifKalemleriByTeklifId(teklifId: number): Promise<boolean>;
+
+  // Projeler
+  getAllProjeler(): Promise<Proje[]>;
+  getProjeById(id: number): Promise<Proje | undefined>;
+  createProje(data: InsertProje): Promise<Proje>;
+  updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | undefined>;
+  deleteProje(id: number): Promise<boolean>;
+  getProjelerByDurum(durum: string): Promise<Proje[]>;
+  searchProjeler(query: string): Promise<Proje[]>;
+
+  // Görevler
+  getAllGorevler(): Promise<Gorev[]>;
+  getGorevById(id: number): Promise<Gorev | undefined>;
+  createGorev(data: InsertGorev): Promise<Gorev>;
+  updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | undefined>;
+  deleteGorev(id: number): Promise<boolean>;
+  getGorevlerByDurum(durum: string): Promise<Gorev[]>;
+  getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]>;
+  getGorevlerByProjeId(projeId: number): Promise<Gorev[]>;
+  searchGorevler(query: string): Promise<Gorev[]>;
+
+  // Dashboard
+  getDashboardStats(period?: string): Promise<any>;
+}
+
 // Geçici in-memory storage
 export class MemoryStorage {
   private cariHesaplar: Map<number, CariHesap> = new Map();

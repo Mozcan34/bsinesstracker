@@ -1,4 +1,4 @@
-import { Quote } from "@shared/schema";
+import { type Teklif as Quote } from "@shared/schema";
 
 // This is a placeholder function that simulates PDF generation
 // In a real app, you would use a library like PDFKit to generate actual PDFs

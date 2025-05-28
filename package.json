@@ -107,7 +107,8 @@
   "devDependencies": {
     "drizzle-kit": "^0.31.1",
     "esbuild": "^0.25.0",
-    "tsx": "^4.19.1"
+    "tsx": "^4.19.1",
+    "rimraf": "^5.0.0"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"

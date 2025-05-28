@@ -135,50 +135,50 @@ export const gorevler = pgTable("gorevler", {
 
 // Insert ve Update schemaları
 export const insertUserSchema = createInsertSchema(users, {
-  id: undefined,
-  createdAt: undefined,
-  updatedAt: undefined
+  // id: z.undefined(), // Otomatik artan alanlar için bu şekilde bırakılabilir veya tamamen çıkarılabilir.
+  // createdAt: z.undefined(),
+  // updatedAt: z.undefined(),
 });
 
 export const insertCariHesapSchema = createInsertSchema(cariHesaplar, {
-  id: undefined,
-  createdAt: undefined,
-  updatedAt: undefined
+  // id: z.undefined(),
+  // createdAt: z.undefined(),
+  // updatedAt: z.undefined(),
 });
 
 export const insertYetkiliKisiSchema = createInsertSchema(yetkiliKisiler, {
-  id: undefined,
-  createdAt: undefined,
-  updatedAt: undefined
+  // id: z.undefined(),
+  // createdAt: z.undefined(),
+  // updatedAt: z.undefined(),
 });
 
 export const insertCariHareketSchema = createInsertSchema(cariHareketler, {
-  id: undefined,
-  createdAt: undefined,
-  updatedAt: undefined
+  // id: z.undefined(),
+  // createdAt: z.undefined(),
+  // updatedAt: z.undefined(),
 });
 
 export const insertTeklifSchema = createInsertSchema(teklifler, {
-  id: undefined,
-  createdAt: undefined,
-  updatedAt: undefined
+  // id: z.undefined(),
+  // createdAt: z.undefined(),
+  // updatedAt: z.undefined(),
 });
 
 export const insertTeklifKalemiSchema = createInsertSchema(teklifKalemleri, {
-  id: undefined,
-  createdAt: undefined
+  // id: z.undefined(),
+  // createdAt: z.undefined(),
 });
 
 export const insertProjeSchema = createInsertSchema(projeler, {
-  id: undefined,
-  createdAt: undefined,
-  updatedAt: undefined
+  // id: z.undefined(),
+  // createdAt: z.undefined(),
+  // updatedAt: z.undefined(),
 });
 
 export const insertGorevSchema = createInsertSchema(gorevler, {
-  id: undefined,
-  createdAt: undefined,
-  updatedAt: undefined
+  // id: z.undefined(),
+  // createdAt: z.undefined(),
+  // updatedAt: z.undefined(),
 });
 
 // Type exports

@@ -32,14 +32,14 @@ export class DatabaseStorage implements IStorage {
     const [created] = await this.getDbInstance().insert(cariHesaplar).values({
       firmaAdi: data.firmaAdi,
       firmaTuru: data.firmaTuru,
-      subeBolge: data.subeBolge || null,
-      telefon: data.telefon || null,
-      email: data.email || null,
-      adres: data.adres || null,
-      vergiNo: data.vergiNo || null,
-      vergiDairesi: data.vergiDairesi || null,
-      notlar: data.notlar || null,
-      isActive: true
+      subeBolge: data.subeBolge,
+      telefon: data.telefon,
+      email: data.email,
+      adres: data.adres,
+      vergiNo: data.vergiNo,
+      vergiDairesi: data.vergiDairesi,
+      notlar: data.notlar,
+      isActive: data.isActive !== undefined ? data.isActive : true,
     }).returning();
     return created;
   }
@@ -81,10 +81,10 @@ export class DatabaseStorage implements IStorage {
     const [created] = await this.getDbInstance().insert(yetkiliKisiler).values({
       cariHesapId: data.cariHesapId,
       adSoyad: data.adSoyad,
-      gorevi: data.gorevi || null,
-      telefon: data.telefon || null,
-      email: data.email || null,
-      departman: data.departman || null
+      gorevi: data.gorevi,
+      telefon: data.telefon,
+      email: data.email,
+      departman: data.departman
     }).returning();
     return {
       ...created,
@@ -94,10 +94,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { cariHesapId, adSoyad, ...updateData } = data; // Prevent updating cariHesapId and adSoyad if they are part of Partial<InsertYetkiliKisi> but not meant to be updated directly here
     const [updated] = await this.getDbInstance()
       .update(yetkiliKisiler)
       .set({
-        ...data,
+        ...updateData, // Use the filtered data
         updatedAt: new Date()
       })
       .where(eq(yetkiliKisiler.id, id))
@@ -132,7 +134,7 @@ export class DatabaseStorage implements IStorage {
       tur: data.tur,
       tutar: data.tutar,
       bakiye: data.bakiye,
-      projeId: data.projeId || null
+      projeId: data.projeId
     }).returning();
     return created;
   }
@@ -212,9 +214,9 @@ export class DatabaseStorage implements IStorage {
       birim: data.birim,
       birimFiyat: data.birimFiyat,
       tutar: data.tutar,
-      iskontoTutari: data.iskontoTutari || null,
+      iskontoTutari: data.iskontoTutari,
       netTutar: data.netTutar,
-      kdvOrani: data.kdvOrani || null,
+      kdvOrani: data.kdvOrani,
       toplamTutar: data.toplamTutar
     }).returning();
     return created;

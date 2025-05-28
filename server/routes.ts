@@ -1,10 +1,24 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
-  insertCariHesapSchema, insertYetkiliKisiSchema, insertCariHareketSchema,
-  insertTeklifSchema, insertTeklifKalemiSchema, insertProjeSchema, insertGorevSchema,
-  cariHesapFormSchema, teklifFormSchema, projeFormSchema, gorevFormSchema
+import {
+  insertCariHesapSchema,
+  insertYetkiliKisiSchema,
+  insertCariHareketSchema,
+  insertTeklifSchema,
+  insertTeklifKalemiSchema,
+  insertProjeSchema,
+  insertGorevSchema,
+  cariHesapFormSchema,
+  teklifFormSchema,
+  projeFormSchema,
+  gorevFormSchema,
+  InsertCariHesap,
+  InsertTeklif,
+  InsertProje,
+  InsertGorev,
+  InsertYetkiliKisi,
+  InsertCariHareket
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -67,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/cari-hesaplar", async (req, res) => {
     try {
       const validatedData = cariHesapFormSchema.parse(req.body);
-      const cariHesap = await storage.createCariHesap(validatedData);
+      const cariHesap = await storage.createCariHesap(validatedData as InsertCariHesap);
       res.status(201).json(cariHesap);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -90,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = cariHesapFormSchema.partial().parse(req.body);
-      const cariHesap = await storage.updateCariHesap(id, validatedData);
+      const cariHesap = await storage.updateCariHesap(id, validatedData as Partial<InsertCariHesap>);
       
       if (!cariHesap) {
         return res.status(404).json({ message: "Cari hesap bulunamadı" });
@@ -151,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/yetkili-kisiler", async (req, res) => {
     try {
       const validatedData = insertYetkiliKisiSchema.parse(req.body);
-      const yetkiliKisi = await storage.createYetkiliKisi(validatedData);
+      const yetkiliKisi = await storage.createYetkiliKisi(validatedData as InsertYetkiliKisi);
       res.status(201).json(yetkiliKisi);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -188,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/cari-hareketler", async (req, res) => {
     try {
       const validatedData = insertCariHareketSchema.parse(req.body);
-      const hareket = await storage.createCariHareket(validatedData);
+      const hareket = await storage.createCariHareket(validatedData as InsertCariHareket);
       res.status(201).json(hareket);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -271,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         teklifNo
       });
       
-      const teklif = await storage.createTeklif(validatedTeklifData);
+      const teklif = await storage.createTeklif(validatedTeklifData as InsertTeklif);
       
       // Teklif kalemlerini ekle
       if (kalemler && Array.isArray(kalemler)) {
@@ -307,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { kalemler, ...teklifData } = req.body;
       const validatedData = teklifFormSchema.partial().parse(teklifData);
       
-      const teklif = await storage.updateTeklif(id, validatedData);
+      const teklif = await storage.updateTeklif(id, validatedData as Partial<InsertTeklif>);
       if (!teklif) {
         return res.status(404).json({ message: "Teklif bulunamadı" });
       }
@@ -419,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projeNo
       });
       
-      const proje = await storage.createProje(validatedData);
+      const proje = await storage.createProje(validatedData as InsertProje);
       res.status(201).json(proje);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -442,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = projeFormSchema.partial().parse(req.body);
-      const proje = await storage.updateProje(id, validatedData);
+      const proje = await storage.updateProje(id, validatedData as Partial<InsertProje>);
       
       if (!proje) {
         return res.status(404).json({ message: "Proje bulunamadı" });
@@ -532,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/gorevler", async (req, res) => {
     try {
       const validatedData = gorevFormSchema.parse(req.body);
-      const gorev = await storage.createGorev(validatedData);
+      const gorev = await storage.createGorev(validatedData as InsertGorev);
       res.status(201).json(gorev);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -555,7 +569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = gorevFormSchema.partial().parse(req.body);
-      const gorev = await storage.updateGorev(id, validatedData);
+      const gorev = await storage.updateGorev(id, validatedData as Partial<InsertGorev>);
       
       if (!gorev) {
         return res.status(404).json({ message: "Görev bulunamadı" });

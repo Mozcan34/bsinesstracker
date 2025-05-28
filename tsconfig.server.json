@@ -5,9 +5,15 @@
     "outDir": "dist/server",
     "noEmit": false,
     "allowImportingTsExtensions": false,
-    "moduleResolution": "node",
-    "jsx": "react"
+    "moduleResolution": "bundler",
+    "jsx": "react",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./shared/*"]
+    },
+    "strict": false,
+    "skipLibCheck": true
   },
-  "include": ["server/**/*"],
+  "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules"]
 } 

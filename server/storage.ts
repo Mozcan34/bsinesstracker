@@ -64,7 +64,7 @@ export interface IStorage {
 }
 
 // Geçici in-memory storage
-export class MemoryStorage {
+export class MemoryStorage implements IStorage {
   private cariHesaplar: Map<number, CariHesap> = new Map();
   private yetkiliKisiler: Map<number, YetkiliKisi> = new Map();
   private cariHareketler: Map<number, CariHareket> = new Map();
@@ -145,8 +145,16 @@ export class MemoryStorage {
     const id = this.currentIds.cariHesap++;
     const now = new Date();
     const cariHesap: CariHesap = {
-      ...data,
       id,
+      firmaAdi: data.firmaAdi,
+      firmaTuru: data.firmaTuru,
+      subeBolge: data.subeBolge || null,
+      telefon: data.telefon || null,
+      email: data.email || null,
+      adres: data.adres || null,
+      vergiNo: data.vergiNo || null,
+      vergiDairesi: data.vergiDairesi || null,
+      notlar: data.notlar || null,
       isActive: true,
       createdAt: now,
       updatedAt: now
@@ -206,8 +214,13 @@ export class MemoryStorage {
     const id = this.currentIds.yetkiliKisi++;
     const now = new Date();
     const yetkiliKisi: YetkiliKisi = {
-      ...data,
       id,
+      cariHesapId: data.cariHesapId,
+      adSoyad: data.adSoyad,
+      gorevi: data.gorevi || null,
+      telefon: data.telefon || null,
+      email: data.email || null,
+      departman: data.departman || null,
       createdAt: now,
       updatedAt: now
     };
@@ -244,8 +257,14 @@ export class MemoryStorage {
     const id = this.currentIds.cariHareket++;
     const now = new Date();
     const hareket: CariHareket = {
-      ...data,
       id,
+      cariHesapId: data.cariHesapId,
+      tarih: data.tarih,
+      aciklama: data.aciklama,
+      tur: data.tur,
+      tutar: data.tutar,
+      bakiye: data.bakiye,
+      projeId: data.projeId || null,
       createdAt: now,
       updatedAt: now
     };
@@ -267,8 +286,20 @@ export class MemoryStorage {
     const id = this.currentIds.teklif++;
     const now = new Date();
     const teklif: Teklif = {
-      ...data,
       id,
+      cariHesapId: data.cariHesapId,
+      yetkiliKisiId: data.yetkiliKisiId || null,
+      teklifNo: data.teklifNo,
+      teklifTuru: data.teklifTuru,
+      teklifKonusu: data.teklifKonusu,
+      teklifDurumu: data.teklifDurumu || null,
+      odemeSekli: data.odemeSekli || null,
+      gecerlilikSuresi: data.gecerlilikSuresi || null,
+      paraBirimi: data.paraBirimi || null,
+      toplamTutar: data.toplamTutar || null,
+      notlar: data.notlar || null,
+      dosyalar: data.dosyalar || null,
+      tarih: data.tarih,
       createdAt: now,
       updatedAt: now
     };
@@ -320,8 +351,17 @@ export class MemoryStorage {
     const id = this.currentIds.teklifKalemi++;
     const now = new Date();
     const kalem: TeklifKalemi = {
-      ...data,
       id,
+      teklifId: data.teklifId,
+      urunHizmetAdi: data.urunHizmetAdi,
+      miktar: data.miktar,
+      birim: data.birim,
+      birimFiyat: data.birimFiyat,
+      tutar: data.tutar,
+      iskontoTutari: data.iskontoTutari || null,
+      netTutar: data.netTutar,
+      kdvOrani: data.kdvOrani || null,
+      toplamTutar: data.toplamTutar,
       createdAt: now
     };
     this.teklifKalemleri.set(id, kalem);
@@ -351,8 +391,21 @@ export class MemoryStorage {
     const id = this.currentIds.proje++;
     const now = new Date();
     const proje: Proje = {
-      ...data,
       id,
+      cariHesapId: data.cariHesapId,
+      teklifId: data.teklifId || null,
+      projeNo: data.projeNo,
+      projeAdi: data.projeAdi,
+      projeDurumu: data.projeDurumu || null,
+      projeTarihi: data.projeTarihi,
+      sonTeslimTarihi: data.sonTeslimTarihi || null,
+      butce: data.butce || null,
+      harcananTutar: data.harcananTutar || null,
+      tamamlanmaOrani: data.tamamlanmaOrani || null,
+      sorumluKisi: data.sorumluKisi || null,
+      aciklama: data.aciklama || null,
+      notlar: data.notlar || null,
+      dosyalar: data.dosyalar || null,
       createdAt: now,
       updatedAt: now
     };
@@ -397,7 +450,7 @@ export class MemoryStorage {
   // Görevler CRUD
   async getAllGorevler(): Promise<Gorev[]> {
     return Array.from(this.gorevler.values())
-      .sort((a, b) => a.siralama - b.siralama || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => (a.siralama || 0) - (b.siralama || 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async getGorevById(id: number): Promise<Gorev | undefined> {
@@ -408,8 +461,21 @@ export class MemoryStorage {
     const id = this.currentIds.gorev++;
     const now = new Date();
     const gorev: Gorev = {
-      ...data,
       id,
+      baslik: data.baslik,
+      aciklama: data.aciklama || null,
+      durum: data.durum || null,
+      oncelik: data.oncelik || null,
+      baslangicTarihi: data.baslangicTarihi || null,
+      bitisTarihi: data.bitisTarihi || null,
+      sonTeslimTarihi: data.sonTeslimTarihi || null,
+      atananKisi: data.atananKisi || null,
+      cariHesapId: data.cariHesapId || null,
+      projeId: data.projeId || null,
+      userId: data.userId || null,
+      siralama: data.siralama || null,
+      etiketler: data.etiketler || null,
+      dosyalar: data.dosyalar || null,
       createdAt: now,
       updatedAt: now
     };
@@ -437,7 +503,7 @@ export class MemoryStorage {
   async getGorevlerByDurum(durum: string): Promise<Gorev[]> {
     return Array.from(this.gorevler.values())
       .filter(g => g.durum === durum)
-      .sort((a, b) => a.siralama - b.siralama || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => (a.siralama || 0) - (b.siralama || 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]> {
@@ -463,7 +529,7 @@ export class MemoryStorage {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  async getDashboardStats(period: string = 'thisMonth') {
+  async getDashboardStats(period: string = 'thisMonth'): Promise<any> {
     // Tarih aralığını belirle
     const now = new Date();
     let startDate: Date;
@@ -508,24 +574,23 @@ export class MemoryStorage {
       const durum = teklif.teklifDurumu || 'Belirsiz';
       acc[durum] = (acc[durum] || 0) + 1;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     const teklifDurumDagilimiArray = Object.entries(teklifDurumDagilimi).map(([name, value]) => ({
       name,
-      value: value as number,
+      value
     }));
-  
 
     // Proje durum dağılımı
     const projeDurumDagilimi = projelerArray.reduce((acc, proje) => {
       const durum = proje.projeDurumu || 'Belirsiz';
       acc[durum] = (acc[durum] || 0) + 1;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     const projeDurumDagilimiArray = Object.entries(projeDurumDagilimi).map(([name, value]) => ({
       name,
-      value: value as number,
+      value
     }));
 
     // Görev durum dağılımı
@@ -533,11 +598,11 @@ export class MemoryStorage {
       const durum = gorev.durum || 'Belirsiz';
       acc[durum] = (acc[durum] || 0) + 1;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     const gorevDurumDagilimiArray = Object.entries(gorevDurumDagilimi).map(([name, value]) => ({
       name,
-      value: value as number,
+      value
     }));
 
     // Cari tip dağılımı
@@ -545,11 +610,11 @@ export class MemoryStorage {
       const tip = cari.firmaTuru || 'Belirsiz';
       acc[tip] = (acc[tip] || 0) + 1;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     const cariTipDagilimiArray = Object.entries(cariTipDagilimi).map(([name, value]) => ({
       name,
-      value: value as number,
+      value
     }));
 
     // Aylık teklif trendi (son 6 ay)
@@ -571,7 +636,7 @@ export class MemoryStorage {
           const teklifTarih = new Date(teklif.createdAt);
           return teklifTarih.getFullYear() === trendMonth.getFullYear() &&
                  teklifTarih.getMonth() === trendMonth.getMonth();
-      }).reduce((sum, teklif) => sum + (teklif.toplamTutar || 0), 0);
+      }).reduce((sum, teklif) => sum + Number(teklif.toplamTutar || 0), 0);
         
       aylikTeklifTrendi.push({
           month: monthName,
@@ -579,7 +644,6 @@ export class MemoryStorage {
           toplamTutar
       });
     }
-      
 
     return {
       totalCariHesaplar,

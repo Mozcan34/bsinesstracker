@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -84,8 +83,14 @@ interface CariHesap {
 
 interface YetkiliKisi {
   id: number;
-  adSoyad: string;
   cariHesapId: number;
+  adSoyad: string;
+  gorevi?: string | null;
+  telefon?: string | null;
+  email?: string | null;
+  departman?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export default function Teklifler() {

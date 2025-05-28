@@ -1,53 +1,66 @@
 import {
   users, User, InsertUser,
-  cariHesaplar as accounts, CariHesap as Account, InsertCariHesap as InsertAccount,
-  cariHareketler as transactions, CariHareket as Transaction, InsertCariHareket as InsertTransaction,
-  teklifler as quotes, Teklif as Quote, InsertTeklif as InsertQuote,
-  teklifKalemleri as quoteItems, TeklifKalemi as QuoteItem, InsertTeklifKalemi as InsertQuoteItem,
-  projeler as projects, Proje as Project, InsertProje as InsertProject,
-  gorevler as tasks, Gorev as Task, InsertGorev as InsertTask,
+  cariHesaplar, CariHesap, InsertCariHesap,
+  cariHareketler, CariHareket, InsertCariHareket,
+  teklifler, Teklif, InsertTeklif,
+  teklifKalemleri, TeklifKalemi, InsertTeklifKalemi,
+  projeler, Proje, InsertProje,
+  gorevler, Gorev, InsertGorev,
+  yetkiliKisiler, YetkiliKisi, InsertYetkiliKisi
 } from "@shared/schema";
-import { db as getDb } from "./db";
+import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { IStorage } from "./storage";
+import { SQL } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
   private getDbInstance() {
-    return getDb;
+    return db;
   }
 
   // Cari Hesaplar
-  async getAllCariHesaplar(): Promise<Account[]> {
-    return await this.getDbInstance().select().from(accounts);
+  async getAllCariHesaplar(): Promise<CariHesap[]> {
+    return await this.getDbInstance().select().from(cariHesaplar);
   }
 
-  async getCariHesapById(id: number): Promise<Account | undefined> {
-    const [account] = await this.getDbInstance().select().from(accounts).where(eq(accounts.id, id));
+  async getCariHesapById(id: number): Promise<CariHesap | undefined> {
+    const [account] = await this.getDbInstance().select().from(cariHesaplar).where(eq(cariHesaplar.id, id));
     return account;
   }
 
-  async createCariHesap(data: InsertAccount): Promise<Account> {
-    const [created] = await this.getDbInstance().insert(accounts).values(data).returning();
+  async createCariHesap(data: InsertCariHesap): Promise<CariHesap> {
+    const [created] = await this.getDbInstance().insert(cariHesaplar).values({
+      firmaAdi: data.firmaAdi,
+      firmaTuru: data.firmaTuru,
+      subeBolge: data.subeBolge || null,
+      telefon: data.telefon || null,
+      email: data.email || null,
+      adres: data.adres || null,
+      vergiNo: data.vergiNo || null,
+      vergiDairesi: data.vergiDairesi || null,
+      notlar: data.notlar || null,
+      isActive: true
+    }).returning();
     return created;
   }
 
-  async updateCariHesap(id: number, data: Partial<InsertAccount>): Promise<Account | undefined> {
+  async updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | undefined> {
     const [updated] = await this.getDbInstance()
-      .update(accounts)
+      .update(cariHesaplar)
       .set(data)
-      .where(eq(accounts.id, id))
+      .where(eq(cariHesaplar.id, id))
       .returning();
     return updated;
   }
 
   async deleteCariHesap(id: number): Promise<boolean> {
-    await this.getDbInstance().delete(accounts).where(eq(accounts.id, id));
+    await this.getDbInstance().delete(cariHesaplar).where(eq(cariHesaplar.id, id));
     return true;
   }
 
-  async searchCariHesaplar(query: string): Promise<Account[]> {
+  async searchCariHesaplar(query: string): Promise<CariHesap[]> {
     const lowerQuery = query.toLowerCase();
-    const results = await this.getDbInstance().select().from(accounts);
+    const results = await this.getDbInstance().select().from(cariHesaplar);
     return results.filter(c => 
       c.firmaAdi.toLowerCase().includes(lowerQuery) ||
       c.subeBolge?.toLowerCase().includes(lowerQuery) ||
@@ -65,17 +78,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createYetkiliKisi(data: InsertYetkiliKisi): Promise<YetkiliKisi> {
-    const [created] = await this.getDbInstance().insert(yetkiliKisiler).values(data).returning();
-    return created;
+    const [created] = await this.getDbInstance().insert(yetkiliKisiler).values({
+      cariHesapId: data.cariHesapId,
+      adSoyad: data.adSoyad,
+      gorevi: data.gorevi || null,
+      telefon: data.telefon || null,
+      email: data.email || null,
+      departman: data.departman || null
+    }).returning();
+    return {
+      ...created,
+      createdAt: new Date(created.createdAt),
+      updatedAt: new Date(created.updatedAt)
+    };
   }
 
   async updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined> {
     const [updated] = await this.getDbInstance()
       .update(yetkiliKisiler)
-      .set(data)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
       .where(eq(yetkiliKisiler.id, id))
       .returning();
-    return updated;
+    if (!updated) return undefined;
+    return {
+      ...updated,
+      createdAt: new Date(updated.createdAt),
+      updatedAt: new Date(updated.updatedAt)
+    };
   }
 
   async deleteYetkiliKisi(id: number): Promise<boolean> {
@@ -87,55 +119,77 @@ export class DatabaseStorage implements IStorage {
   async getCariHareketlerByCariId(cariHesapId: number, limit: number = 25): Promise<CariHareket[]> {
     return await this.getDbInstance()
       .select()
-      .from(transactions)
-      .where(eq(transactions.cariHesapId, cariHesapId))
+      .from(cariHareketler)
+      .where(eq(cariHareketler.cariHesapId, cariHesapId))
       .limit(limit);
   }
 
   async createCariHareket(data: InsertCariHareket): Promise<CariHareket> {
-    const [created] = await this.getDbInstance().insert(transactions).values(data).returning();
+    const [created] = await this.getDbInstance().insert(cariHareketler).values({
+      cariHesapId: data.cariHesapId,
+      tarih: data.tarih,
+      aciklama: data.aciklama,
+      tur: data.tur,
+      tutar: data.tutar,
+      bakiye: data.bakiye,
+      projeId: data.projeId || null
+    }).returning();
     return created;
   }
 
   // Teklifler
-  async getAllTeklifler(): Promise<Quote[]> {
-    return await this.getDbInstance().select().from(quotes);
+  async getAllTeklifler(): Promise<Teklif[]> {
+    return await this.getDbInstance().select().from(teklifler);
   }
 
-  async getTeklifById(id: number): Promise<Quote | undefined> {
-    const [quote] = await this.getDbInstance().select().from(quotes).where(eq(quotes.id, id));
+  async getTeklifById(id: number): Promise<Teklif | undefined> {
+    const [quote] = await this.getDbInstance().select().from(teklifler).where(eq(teklifler.id, id));
     return quote;
   }
 
-  async createTeklif(data: InsertQuote): Promise<Quote> {
-    const [created] = await this.getDbInstance().insert(quotes).values(data).returning();
+  async createTeklif(data: InsertTeklif): Promise<Teklif> {
+    const [created] = await this.getDbInstance().insert(teklifler).values({
+      cariHesapId: data.cariHesapId,
+      yetkiliKisiId: data.yetkiliKisiId || null,
+      teklifNo: data.teklifNo,
+      teklifTuru: data.teklifTuru,
+      teklifKonusu: data.teklifKonusu,
+      teklifDurumu: data.teklifDurumu || null,
+      odemeSekli: data.odemeSekli || null,
+      gecerlilikSuresi: data.gecerlilikSuresi || null,
+      paraBirimi: data.paraBirimi || null,
+      toplamTutar: data.toplamTutar || null,
+      notlar: data.notlar || null,
+      dosyalar: data.dosyalar || null,
+      tarih: data.tarih
+    } as InsertTeklif).returning();
     return created;
   }
 
-  async updateTeklif(id: number, data: Partial<InsertQuote>): Promise<Quote | undefined> {
+  async updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | undefined> {
     const [updated] = await this.getDbInstance()
-      .update(quotes)
+      .update(teklifler)
       .set(data)
-      .where(eq(quotes.id, id))
+      .where(eq(teklifler.id, id))
       .returning();
     return updated;
   }
 
   async deleteTeklif(id: number): Promise<boolean> {
-    await this.getDbInstance().delete(quotes).where(eq(quotes.id, id));
+    await this.getDbInstance().delete(teklifler).where(eq(teklifler.id, id));
     return true;
   }
 
-  async getTekliflerByTur(tur: string): Promise<Quote[]> {
+  async getTekliflerByTur(tur: string): Promise<Teklif[]> {
     return await this.getDbInstance()
       .select()
-      .from(quotes)
-      .where(eq(quotes.teklifTuru, tur));
+      .from(teklifler)
+      .where(eq(teklifler.teklifTuru, tur));
   }
 
-  async searchTeklifler(query: string): Promise<Quote[]> {
+  async searchTeklifler(query: string): Promise<Teklif[]> {
     const lowerQuery = query.toLowerCase();
-    const results = await this.getDbInstance().select().from(quotes);
+    const results = await this.getDbInstance().select().from(teklifler);
     return results.filter(t => 
       t.teklifNo.toLowerCase().includes(lowerQuery) ||
       t.teklifKonusu.toLowerCase().includes(lowerQuery)
@@ -143,62 +197,88 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Teklif Kalemleri
-  async getTeklifKalemleriByTeklifId(teklifId: number): Promise<QuoteItem[]> {
+  async getTeklifKalemleriByTeklifId(teklifId: number): Promise<TeklifKalemi[]> {
     return await this.getDbInstance()
       .select()
-      .from(quoteItems)
-      .where(eq(quoteItems.teklifId, teklifId));
+      .from(teklifKalemleri)
+      .where(eq(teklifKalemleri.teklifId, teklifId));
   }
 
-  async createTeklifKalemi(data: InsertQuoteItem): Promise<QuoteItem> {
-    const [created] = await this.getDbInstance().insert(quoteItems).values(data).returning();
+  async createTeklifKalemi(data: InsertTeklifKalemi): Promise<TeklifKalemi> {
+    const [created] = await this.getDbInstance().insert(teklifKalemleri).values({
+      teklifId: data.teklifId,
+      urunHizmetAdi: data.urunHizmetAdi,
+      miktar: data.miktar,
+      birim: data.birim,
+      birimFiyat: data.birimFiyat,
+      tutar: data.tutar,
+      iskontoTutari: data.iskontoTutari || null,
+      netTutar: data.netTutar,
+      kdvOrani: data.kdvOrani || null,
+      toplamTutar: data.toplamTutar
+    }).returning();
     return created;
   }
 
   async deleteTeklifKalemleriByTeklifId(teklifId: number): Promise<boolean> {
-    await this.getDbInstance().delete(quoteItems).where(eq(quoteItems.teklifId, teklifId));
+    await this.getDbInstance().delete(teklifKalemleri).where(eq(teklifKalemleri.teklifId, teklifId));
     return true;
   }
 
   // Projeler
-  async getAllProjeler(): Promise<Project[]> {
-    return await this.getDbInstance().select().from(projects);
+  async getAllProjeler(): Promise<Proje[]> {
+    return await this.getDbInstance().select().from(projeler);
   }
 
-  async getProjeById(id: number): Promise<Project | undefined> {
-    const [project] = await this.getDbInstance().select().from(projects).where(eq(projects.id, id));
+  async getProjeById(id: number): Promise<Proje | undefined> {
+    const [project] = await this.getDbInstance().select().from(projeler).where(eq(projeler.id, id));
     return project;
   }
 
-  async createProje(data: InsertProject): Promise<Project> {
-    const [created] = await this.getDbInstance().insert(projects).values(data).returning();
+  async createProje(data: InsertProje): Promise<Proje> {
+    const [created] = await this.getDbInstance().insert(projeler).values({
+      cariHesapId: data.cariHesapId,
+      teklifId: data.teklifId || null,
+      projeNo: data.projeNo,
+      projeAdi: data.projeAdi,
+      projeDurumu: data.projeDurumu || null,
+      projeTarihi: data.projeTarihi,
+      sonTeslimTarihi: data.sonTeslimTarihi || null,
+      butce: data.butce || null,
+      harcananTutar: data.harcananTutar || null,
+      tamamlanmaOrani: data.tamamlanmaOrani || null,
+      sorumluKisi: data.sorumluKisi || null,
+      aciklama: data.aciklama || null,
+      notlar: data.notlar || null,
+      dosyalar: data.dosyalar || null
+    } as InsertProje).returning();
     return created;
   }
 
-  async updateProje(id: number, data: Partial<InsertProject>): Promise<Project | undefined> {
+  async updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | undefined> {
     const [updated] = await this.getDbInstance()
-      .update(projects)
+      .update(projeler)
       .set(data)
-      .where(eq(projects.id, id))
+      .where(eq(projeler.id, id))
       .returning();
     return updated;
   }
 
   async deleteProje(id: number): Promise<boolean> {
-    await this.getDbInstance().delete(projects).where(eq(projects.id, id));
+    await this.getDbInstance().delete(projeler).where(eq(projeler.id, id));
     return true;
   }
 
-  async getProjelerByDurum(durum: string): Promise<Project[]> {
+  async getProjelerByDurum(durum: string): Promise<Proje[]> {
     return await this.getDbInstance()
       .select()
-      .from(projects)
-      .where(eq(projects.projeDurumu, durum));
+      .from(projeler)
+      .where(eq(projeler.projeDurumu, durum));
   }
 
-  async searchProjeler(query: string): Promise<Project[]> {
+  async searchProjeler(query: string): Promise<Proje[]> {
     const lowerQuery = query.toLowerCase();
-    const results = await this.getDbInstance().select().from(projects);
+    const results = await this.getDbInstance().select().from(projeler);
     return results.filter(p => 
       p.projeNo.toLowerCase().includes(lowerQuery) ||
       p.projeAdi.toLowerCase().includes(lowerQuery) ||
@@ -207,58 +287,73 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Görevler
-  async getAllGorevler(): Promise<Task[]> {
-    return await this.getDbInstance().select().from(tasks);
+  async getAllGorevler(): Promise<Gorev[]> {
+    return await this.getDbInstance().select().from(gorevler);
   }
 
-  async getGorevById(id: number): Promise<Task | undefined> {
-    const [task] = await this.getDbInstance().select().from(tasks).where(eq(tasks.id, id));
+  async getGorevById(id: number): Promise<Gorev | undefined> {
+    const [task] = await this.getDbInstance().select().from(gorevler).where(eq(gorevler.id, id));
     return task;
   }
 
-  async createGorev(data: InsertTask): Promise<Task> {
-    const [created] = await this.getDbInstance().insert(tasks).values(data).returning();
+  async createGorev(data: InsertGorev): Promise<Gorev> {
+    const [created] = await this.getDbInstance().insert(gorevler).values({
+      baslik: data.baslik,
+      aciklama: data.aciklama || null,
+      durum: data.durum || null,
+      oncelik: data.oncelik || null,
+      baslangicTarihi: data.baslangicTarihi || null,
+      bitisTarihi: data.bitisTarihi || null,
+      sonTeslimTarihi: data.sonTeslimTarihi || null,
+      atananKisi: data.atananKisi || null,
+      cariHesapId: data.cariHesapId || null,
+      projeId: data.projeId || null,
+      userId: data.userId || null,
+      siralama: data.siralama || 0,
+      etiketler: data.etiketler || null,
+      dosyalar: data.dosyalar || null
+    } as InsertGorev).returning();
     return created;
   }
 
-  async updateGorev(id: number, data: Partial<InsertTask>): Promise<Task | undefined> {
+  async updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | undefined> {
     const [updated] = await this.getDbInstance()
-      .update(tasks)
+      .update(gorevler)
       .set(data)
-      .where(eq(tasks.id, id))
+      .where(eq(gorevler.id, id))
       .returning();
     return updated;
   }
 
   async deleteGorev(id: number): Promise<boolean> {
-    await this.getDbInstance().delete(tasks).where(eq(tasks.id, id));
+    await this.getDbInstance().delete(gorevler).where(eq(gorevler.id, id));
     return true;
   }
 
-  async getGorevlerByDurum(durum: string): Promise<Task[]> {
+  async getGorevlerByDurum(durum: string): Promise<Gorev[]> {
     return await this.getDbInstance()
       .select()
-      .from(tasks)
-      .where(eq(tasks.durum, durum));
+      .from(gorevler)
+      .where(eq(gorevler.durum, durum));
   }
 
-  async getGorevlerByCariId(cariHesapId: number): Promise<Task[]> {
+  async getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]> {
     return await this.getDbInstance()
       .select()
-      .from(tasks)
-      .where(eq(tasks.cariHesapId, cariHesapId));
+      .from(gorevler)
+      .where(eq(gorevler.cariHesapId, cariHesapId));
   }
 
-  async getGorevlerByProjeId(projeId: number): Promise<Task[]> {
+  async getGorevlerByProjeId(projeId: number): Promise<Gorev[]> {
     return await this.getDbInstance()
       .select()
-      .from(tasks)
-      .where(eq(tasks.projeId, projeId));
+      .from(gorevler)
+      .where(eq(gorevler.projeId, projeId));
   }
 
-  async searchGorevler(query: string): Promise<Task[]> {
+  async searchGorevler(query: string): Promise<Gorev[]> {
     const lowerQuery = query.toLowerCase();
-    const results = await this.getDbInstance().select().from(tasks);
+    const results = await this.getDbInstance().select().from(gorevler);
     return results.filter(g => 
       g.baslik.toLowerCase().includes(lowerQuery) ||
       g.aciklama?.toLowerCase().includes(lowerQuery) ||

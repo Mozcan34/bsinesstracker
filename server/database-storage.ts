@@ -9,9 +9,20 @@ import {
   yetkiliKisiler, YetkiliKisi, InsertYetkiliKisi
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, InferInsertModel } from "drizzle-orm";
 import { IStorage } from "./storage";
 import { SQL } from "drizzle-orm";
+
+// Helper function to remove undefined properties from an object
+function removeUndefinedProps<T extends Record<string, any>>(obj: T): T {
+  const newObj = { ...obj };
+  for (const key in newObj) {
+    if (newObj[key] === undefined) {
+      delete newObj[key];
+    }
+  }
+  return newObj;
+}
 
 export class DatabaseStorage implements IStorage {
   private getDbInstance() {
@@ -29,25 +40,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCariHesap(data: InsertCariHesap): Promise<CariHesap> {
-    const [created] = await this.getDbInstance().insert(cariHesaplar).values({
+    const valuesToInsert: InferInsertModel<typeof cariHesaplar> = {
+      ...removeUndefinedProps(data),
       firmaAdi: data.firmaAdi,
       firmaTuru: data.firmaTuru,
-      subeBolge: data.subeBolge,
-      telefon: data.telefon,
-      email: data.email,
-      adres: data.adres,
-      vergiNo: data.vergiNo,
-      vergiDairesi: data.vergiDairesi,
-      notlar: data.notlar,
       isActive: data.isActive !== undefined ? data.isActive : true,
-    }).returning();
+    };
+    const [created] = await this.getDbInstance().insert(cariHesaplar).values(valuesToInsert).returning();
     return created;
   }
 
   async updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | undefined> {
+    const valuesToUpdate = removeUndefinedProps(data);
+    if (Object.keys(valuesToUpdate).length === 0) {
+      return this.getCariHesapById(id);
+    }
     const [updated] = await this.getDbInstance()
       .update(cariHesaplar)
-      .set(data)
+      .set(valuesToUpdate)
       .where(eq(cariHesaplar.id, id))
       .returning();
     return updated;
@@ -61,7 +71,7 @@ export class DatabaseStorage implements IStorage {
   async searchCariHesaplar(query: string): Promise<CariHesap[]> {
     const lowerQuery = query.toLowerCase();
     const results = await this.getDbInstance().select().from(cariHesaplar);
-    return results.filter(c => 
+    return results.filter(c =>
       c.firmaAdi.toLowerCase().includes(lowerQuery) ||
       c.subeBolge?.toLowerCase().includes(lowerQuery) ||
       c.telefon?.toLowerCase().includes(lowerQuery) ||
@@ -78,14 +88,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createYetkiliKisi(data: InsertYetkiliKisi): Promise<YetkiliKisi> {
-    const [created] = await this.getDbInstance().insert(yetkiliKisiler).values({
+    const valuesToInsert: InferInsertModel<typeof yetkiliKisiler> = {
+      ...removeUndefinedProps(data),
       cariHesapId: data.cariHesapId,
       adSoyad: data.adSoyad,
-      gorevi: data.gorevi,
-      telefon: data.telefon,
-      email: data.email,
-      departman: data.departman
-    }).returning();
+    };
+    const [created] = await this.getDbInstance().insert(yetkiliKisiler).values(valuesToInsert).returning();
     return {
       ...created,
       createdAt: new Date(created.createdAt),
@@ -94,14 +102,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { cariHesapId, adSoyad, ...updateData } = data; // Prevent updating cariHesapId and adSoyad if they are part of Partial<InsertYetkiliKisi> but not meant to be updated directly here
+    const { cariHesapId, adSoyad, ...otherData } = data;
+    const valuesToUpdate = removeUndefinedProps(otherData);
+
+    if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
+       const currentYetkiliKisi = await this.getDbInstance().select().from(yetkiliKisiler).where(eq(yetkiliKisiler.id, id)).then(res => res[0]);
+       if (currentYetkiliKisi) {
+         return { ...currentYetkiliKisi, createdAt: new Date(currentYetkiliKisi.createdAt), updatedAt: new Date(currentYetkiliKisi.updatedAt) };
+       }
+       return undefined;
+    }
+    
+    const updatePayload: Partial<InferInsertModel<typeof yetkiliKisiler>> = {
+        ...valuesToUpdate,
+    };
+    // updatedAt her zaman güncellenmeli, eğer data içinde gelmiyorsa bile
+    if (!updatePayload.hasOwnProperty('updatedAt')) {
+        updatePayload.updatedAt = new Date();
+    }
+
+
     const [updated] = await this.getDbInstance()
       .update(yetkiliKisiler)
-      .set({
-        ...updateData, // Use the filtered data
-        updatedAt: new Date()
-      })
+      .set(updatePayload)
       .where(eq(yetkiliKisiler.id, id))
       .returning();
     if (!updated) return undefined;
@@ -127,15 +150,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCariHareket(data: InsertCariHareket): Promise<CariHareket> {
-    const [created] = await this.getDbInstance().insert(cariHareketler).values({
+    const valuesToInsert: InferInsertModel<typeof cariHareketler> = {
+      ...removeUndefinedProps(data),
       cariHesapId: data.cariHesapId,
-      tarih: data.tarih,
       aciklama: data.aciklama,
+      tarih: data.tarih,
       tur: data.tur,
       tutar: data.tutar,
       bakiye: data.bakiye,
-      projeId: data.projeId
-    }).returning();
+    };
+    const [created] = await this.getDbInstance().insert(cariHareketler).values(valuesToInsert).returning();
     return created;
   }
 
@@ -150,28 +174,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTeklif(data: InsertTeklif): Promise<Teklif> {
-    const [created] = await this.getDbInstance().insert(teklifler).values({
-      cariHesapId: data.cariHesapId,
-      yetkiliKisiId: data.yetkiliKisiId || null,
-      teklifNo: data.teklifNo,
-      teklifTuru: data.teklifTuru,
-      teklifKonusu: data.teklifKonusu,
-      teklifDurumu: data.teklifDurumu || null,
-      odemeSekli: data.odemeSekli || null,
-      gecerlilikSuresi: data.gecerlilikSuresi || null,
-      paraBirimi: data.paraBirimi || null,
-      toplamTutar: data.toplamTutar || null,
-      notlar: data.notlar || null,
-      dosyalar: data.dosyalar || null,
-      tarih: data.tarih
-    } as InsertTeklif).returning();
+    const valuesToInsert: InferInsertModel<typeof teklifler> = {
+        ...removeUndefinedProps(data),
+        cariHesapId: data.cariHesapId,
+        teklifNo: data.teklifNo,
+        teklifTuru: data.teklifTuru,
+        teklifKonusu: data.teklifKonusu,
+        tarih: data.tarih,
+    };
+    const [created] = await this.getDbInstance().insert(teklifler).values(valuesToInsert).returning();
     return created;
   }
 
   async updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | undefined> {
+    const valuesToUpdate = removeUndefinedProps(data);
+    if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
+      return this.getTeklifById(id);
+    }
+    const updatePayload : Partial<InferInsertModel<typeof teklifler>> = {
+        ...valuesToUpdate,
+    };
+    if (!updatePayload.hasOwnProperty('updatedAt')) {
+        updatePayload.updatedAt = new Date();
+    }
+
     const [updated] = await this.getDbInstance()
       .update(teklifler)
-      .set(data)
+      .set(updatePayload)
       .where(eq(teklifler.id, id))
       .returning();
     return updated;
@@ -192,7 +221,7 @@ export class DatabaseStorage implements IStorage {
   async searchTeklifler(query: string): Promise<Teklif[]> {
     const lowerQuery = query.toLowerCase();
     const results = await this.getDbInstance().select().from(teklifler);
-    return results.filter(t => 
+    return results.filter(t =>
       t.teklifNo.toLowerCase().includes(lowerQuery) ||
       t.teklifKonusu.toLowerCase().includes(lowerQuery)
     );
@@ -207,18 +236,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTeklifKalemi(data: InsertTeklifKalemi): Promise<TeklifKalemi> {
-    const [created] = await this.getDbInstance().insert(teklifKalemleri).values({
-      teklifId: data.teklifId,
-      urunHizmetAdi: data.urunHizmetAdi,
-      miktar: data.miktar,
-      birim: data.birim,
-      birimFiyat: data.birimFiyat,
-      tutar: data.tutar,
-      iskontoTutari: data.iskontoTutari,
-      netTutar: data.netTutar,
-      kdvOrani: data.kdvOrani,
-      toplamTutar: data.toplamTutar
-    }).returning();
+    const valuesToInsert: InferInsertModel<typeof teklifKalemleri> = {
+        ...removeUndefinedProps(data),
+        teklifId: data.teklifId,
+        urunHizmetAdi: data.urunHizmetAdi,
+        miktar: data.miktar,
+        birim: data.birim,
+        birimFiyat: data.birimFiyat,
+        tutar: data.tutar,
+        netTutar: data.netTutar,
+        toplamTutar: data.toplamTutar,
+    };
+    const [created] = await this.getDbInstance().insert(teklifKalemleri).values(valuesToInsert).returning();
     return created;
   }
 
@@ -238,29 +267,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProje(data: InsertProje): Promise<Proje> {
-    const [created] = await this.getDbInstance().insert(projeler).values({
-      cariHesapId: data.cariHesapId,
-      teklifId: data.teklifId || null,
-      projeNo: data.projeNo,
-      projeAdi: data.projeAdi,
-      projeDurumu: data.projeDurumu || null,
-      projeTarihi: data.projeTarihi,
-      sonTeslimTarihi: data.sonTeslimTarihi || null,
-      butce: data.butce || null,
-      harcananTutar: data.harcananTutar || null,
-      tamamlanmaOrani: data.tamamlanmaOrani || null,
-      sorumluKisi: data.sorumluKisi || null,
-      aciklama: data.aciklama || null,
-      notlar: data.notlar || null,
-      dosyalar: data.dosyalar || null
-    } as InsertProje).returning();
+    const valuesToInsert: InferInsertModel<typeof projeler> = {
+        ...removeUndefinedProps(data),
+        cariHesapId: data.cariHesapId,
+        projeNo: data.projeNo,
+        projeAdi: data.projeAdi,
+        projeTarihi: data.projeTarihi,
+    };
+    const [created] = await this.getDbInstance().insert(projeler).values(valuesToInsert).returning();
     return created;
   }
 
   async updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | undefined> {
+    const valuesToUpdate = removeUndefinedProps(data);
+     if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
+      return this.getProjeById(id);
+    }
+    const updatePayload: Partial<InferInsertModel<typeof projeler>> = {
+        ...valuesToUpdate,
+    };
+    if (!updatePayload.hasOwnProperty('updatedAt')) {
+        updatePayload.updatedAt = new Date();
+    }
     const [updated] = await this.getDbInstance()
       .update(projeler)
-      .set(data)
+      .set(updatePayload)
       .where(eq(projeler.id, id))
       .returning();
     return updated;
@@ -281,7 +312,7 @@ export class DatabaseStorage implements IStorage {
   async searchProjeler(query: string): Promise<Proje[]> {
     const lowerQuery = query.toLowerCase();
     const results = await this.getDbInstance().select().from(projeler);
-    return results.filter(p => 
+    return results.filter(p =>
       p.projeNo.toLowerCase().includes(lowerQuery) ||
       p.projeAdi.toLowerCase().includes(lowerQuery) ||
       p.aciklama?.toLowerCase().includes(lowerQuery)
@@ -299,29 +330,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createGorev(data: InsertGorev): Promise<Gorev> {
-    const [created] = await this.getDbInstance().insert(gorevler).values({
+    const valuesToInsert: InferInsertModel<typeof gorevler> = {
+      ...removeUndefinedProps(data),
       baslik: data.baslik,
-      aciklama: data.aciklama || null,
-      durum: data.durum || null,
-      oncelik: data.oncelik || null,
-      baslangicTarihi: data.baslangicTarihi || null,
-      bitisTarihi: data.bitisTarihi || null,
-      sonTeslimTarihi: data.sonTeslimTarihi || null,
-      atananKisi: data.atananKisi || null,
-      cariHesapId: data.cariHesapId || null,
-      projeId: data.projeId || null,
-      userId: data.userId || null,
-      siralama: data.siralama || 0,
-      etiketler: data.etiketler || null,
-      dosyalar: data.dosyalar || null
-    } as InsertGorev).returning();
+      siralama: data.siralama === undefined || data.siralama === null ? 0 : data.siralama,
+    };
+    const [created] = await this.getDbInstance().insert(gorevler).values(valuesToInsert).returning();
     return created;
   }
 
   async updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | undefined> {
+    const valuesToUpdate = removeUndefinedProps(data);
+    if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
+      return this.getGorevById(id);
+    }
+     const updatePayload: Partial<InferInsertModel<typeof gorevler>> = {
+        ...valuesToUpdate,
+    };
+    if (!updatePayload.hasOwnProperty('updatedAt')) {
+        updatePayload.updatedAt = new Date();
+    }
     const [updated] = await this.getDbInstance()
       .update(gorevler)
-      .set(data)
+      .set(updatePayload)
       .where(eq(gorevler.id, id))
       .returning();
     return updated;
@@ -356,7 +387,7 @@ export class DatabaseStorage implements IStorage {
   async searchGorevler(query: string): Promise<Gorev[]> {
     const lowerQuery = query.toLowerCase();
     const results = await this.getDbInstance().select().from(gorevler);
-    return results.filter(g => 
+    return results.filter(g =>
       g.baslik.toLowerCase().includes(lowerQuery) ||
       g.aciklama?.toLowerCase().includes(lowerQuery) ||
       g.atananKisi?.toLowerCase().includes(lowerQuery)

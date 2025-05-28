@@ -9,7 +9,7 @@ const app = express();
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production'
     ? ['https://turkish-job-connect2-30rpk2y9r-muhammetozcan34s-projects.vercel.app']
-    : ['http://localhost:3000'],
+    : ['http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

@@ -40,13 +40,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCariHesap(data: InsertCariHesap): Promise<CariHesap> {
-    const valuesToInsert: InferInsertModel<typeof cariHesaplar> = {
-      ...removeUndefinedProps(data),
+    const insertData = {
       firmaAdi: data.firmaAdi,
       firmaTuru: data.firmaTuru,
+      subeBolge: data.subeBolge ?? null,
+      telefon: data.telefon ?? null,
+      email: data.email ?? null,
+      adres: data.adres ?? null,
+      vergiNo: data.vergiNo ?? null,
+      vergiDairesi: data.vergiDairesi ?? null,
+      notlar: data.notlar ?? null,
       isActive: data.isActive !== undefined ? data.isActive : true,
     };
-    const [created] = await this.getDbInstance().insert(cariHesaplar).values(valuesToInsert).returning();
+    const [created] = await this.getDbInstance().insert(cariHesaplar).values(insertData).returning();
     return created;
   }
 
@@ -330,12 +336,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createGorev(data: InsertGorev): Promise<Gorev> {
-    const valuesToInsert: InferInsertModel<typeof gorevler> = {
-      ...removeUndefinedProps(data),
+    const insertData = {
       baslik: data.baslik,
-      siralama: data.siralama === undefined || data.siralama === null ? 0 : data.siralama,
+      aciklama: data.aciklama ?? null,
+      durum: data.durum ?? null,
+      oncelik: data.oncelik ?? null,
+      baslangicTarihi: data.baslangicTarihi ?? null,
+      bitisTarihi: data.bitisTarihi ?? null,
+      sonTeslimTarihi: data.sonTeslimTarihi ?? null,
+      atananKisi: data.atananKisi ?? null,
+      cariHesapId: data.cariHesapId ?? null,
+      projeId: data.projeId ?? null,
+      userId: data.userId ?? null,
+      siralama: data.siralama ?? 0,
+      etiketler: data.etiketler ?? null,
+      dosyalar: data.dosyalar ?? null,
     };
-    const [created] = await this.getDbInstance().insert(gorevler).values(valuesToInsert).returning();
+    const [created] = await this.getDbInstance().insert(gorevler).values(insertData).returning();
     return created;
   }
 

@@ -102,13 +102,13 @@
     "wouter": "^3.7.0",
     "ws": "^8.18.0",
     "zod": "^3.25.30",
-    "zod-validation-error": "^3.4.0"
+    "zod-validation-error": "^3.4.0",
+    "rimraf": "^5.0.0"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.1",
     "esbuild": "^0.25.0",
-    "tsx": "^4.19.1",
-    "rimraf": "^5.0.0"
+    "tsx": "^4.19.1"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"

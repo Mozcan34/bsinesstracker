@@ -5,9 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { serveStatic } from "./vite";
 
-// ESM için __dirname ve __filename oluştur
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = process.cwd();
 
 const app = express();
 

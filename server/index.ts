@@ -1,6 +1,13 @@
 import express from "express";
 import cors from "cors";
 import { registerRoutes } from "./routes";
+import path from "path";
+import { fileURLToPath } from "url";
+import { serveStatic } from "./vite";
+
+// ESM için __dirname ve __filename oluştur
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -9,7 +16,13 @@ app.use(cors());
 app.use(express.json());
 
 // Route'ları kaydet
-registerRoutes(app);
+const server = await registerRoutes(app);
+
+// Production modunda statik dosyaları sun
+if (process.env.NODE_ENV === 'production') {
+  console.log("Production modunda statik dosyalar sunuluyor...");
+  serveStatic(app);
+}
 
 // Port yapılandırması
 const port = parseInt(process.env.PORT || '3000', 10);
@@ -23,9 +36,9 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Production için
 if (process.env.NODE_ENV === 'production') {
-  app.listen(port, '0.0.0.0', () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`Server listening on port ${port} in production mode`);
   });
 }
 
-export default app; 
+export default app;

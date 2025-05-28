@@ -109,28 +109,13 @@ export class DatabaseStorage implements IStorage {
 
   async updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined> {
     const { cariHesapId, adSoyad, ...otherData } = data;
-    const valuesToUpdate = removeUndefinedProps(otherData);
-
-    if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
-       const currentYetkiliKisi = await this.getDbInstance().select().from(yetkiliKisiler).where(eq(yetkiliKisiler.id, id)).then(res => res[0]);
-       if (currentYetkiliKisi) {
-         return { ...currentYetkiliKisi, createdAt: new Date(currentYetkiliKisi.createdAt), updatedAt: new Date(currentYetkiliKisi.updatedAt) };
-       }
-       return undefined;
-    }
-    
-    const updatePayload: Partial<InferInsertModel<typeof yetkiliKisiler>> = {
-        ...valuesToUpdate,
+    const valuesToUpdate: Partial<InsertYetkiliKisi> & { updatedAt: Date } = {
+      ...removeUndefinedProps(otherData),
+      updatedAt: new Date(),
     };
-    // updatedAt her zaman güncellenmeli, eğer data içinde gelmiyorsa bile
-    if (!updatePayload.hasOwnProperty('updatedAt')) {
-        updatePayload.updatedAt = new Date();
-    }
-
-
     const [updated] = await this.getDbInstance()
       .update(yetkiliKisiler)
-      .set(updatePayload)
+      .set(valuesToUpdate)
       .where(eq(yetkiliKisiler.id, id))
       .returning();
     if (!updated) return undefined;
@@ -193,20 +178,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | undefined> {
-    const valuesToUpdate = removeUndefinedProps(data);
-    if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
-      return this.getTeklifById(id);
-    }
-    const updatePayload : Partial<InferInsertModel<typeof teklifler>> = {
-        ...valuesToUpdate,
+    const valuesToUpdate: Partial<InsertTeklif> & { updatedAt: Date } = {
+      ...removeUndefinedProps(data),
+      updatedAt: new Date(),
     };
-    if (!updatePayload.hasOwnProperty('updatedAt')) {
-        updatePayload.updatedAt = new Date();
-    }
-
     const [updated] = await this.getDbInstance()
       .update(teklifler)
-      .set(updatePayload)
+      .set(valuesToUpdate)
       .where(eq(teklifler.id, id))
       .returning();
     return updated;
@@ -285,19 +263,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | undefined> {
-    const valuesToUpdate = removeUndefinedProps(data);
-     if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
-      return this.getProjeById(id);
-    }
-    const updatePayload: Partial<InferInsertModel<typeof projeler>> = {
-        ...valuesToUpdate,
+    const valuesToUpdate: Partial<InsertProje> & { updatedAt: Date } = {
+      ...removeUndefinedProps(data),
+      updatedAt: new Date(),
     };
-    if (!updatePayload.hasOwnProperty('updatedAt')) {
-        updatePayload.updatedAt = new Date();
-    }
     const [updated] = await this.getDbInstance()
       .update(projeler)
-      .set(updatePayload)
+      .set(valuesToUpdate)
       .where(eq(projeler.id, id))
       .returning();
     return updated;
@@ -357,19 +329,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | undefined> {
-    const valuesToUpdate = removeUndefinedProps(data);
-    if (Object.keys(valuesToUpdate).length === 0 && !data.hasOwnProperty('updatedAt')) {
-      return this.getGorevById(id);
-    }
-     const updatePayload: Partial<InferInsertModel<typeof gorevler>> = {
-        ...valuesToUpdate,
+    const valuesToUpdate: Partial<InsertGorev> & { updatedAt: Date } = {
+      ...removeUndefinedProps(data),
+      updatedAt: new Date(),
     };
-    if (!updatePayload.hasOwnProperty('updatedAt')) {
-        updatePayload.updatedAt = new Date();
-    }
     const [updated] = await this.getDbInstance()
       .update(gorevler)
-      .set(updatePayload)
+      .set(valuesToUpdate)
       .where(eq(gorevler.id, id))
       .returning();
     return updated;

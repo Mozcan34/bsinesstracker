@@ -1,9 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "ESNext",
     "outDir": "dist/server",
     "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "moduleResolution": "node",
     "jsx": "react"
   },
   "include": ["server/**/*"],

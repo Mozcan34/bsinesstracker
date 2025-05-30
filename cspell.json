@@ -1,0 +1,28 @@
+{
+    "version": "0.2",
+    "language": "en,tr",
+    "words": [
+        "yapılandırması",
+        "cari",
+        "hesap",
+        "teklif",
+        "proje",
+        "gorev",
+        "görev",
+        "yetkili",
+        "kisi",
+        "kişi",
+        "hareket"
+    ],
+    "dictionaries": [
+        "tr-TR",
+        "softwareTerms",
+        "typescript",
+        "node"
+    ],
+    "ignorePaths": [
+        "node_modules/**",
+        "dist/**",
+        "build/**"
+    ]
+} 

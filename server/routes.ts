@@ -21,25 +21,29 @@ import {
   InsertCariHareket
 } from "@shared/schema";
 import { z } from "zod";
+import { Request, Response } from 'express';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Dashboard istatistikleri
-  app.get("/api/dashboard/stats", async (req, res) => {
+  app.get("/api/dashboard/stats", async (req: Request, res: Response) => {
     try {
       const { period = 'thisMonth' } = req.query;
       const stats = await storage.getDashboardStats(period as string);
       res.json(stats);
-    } catch (error) {
-      console.error("Dashboard stats error:", error);
-      res.status(500).json({ message: "İstatistikler yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // === CARİ HESAPLAR ===
   
   // Tüm cari hesapları getir
-  app.get("/api/cari-hesaplar", async (req, res) => {
+  app.get("/api/cari-hesaplar", async (req: Request, res: Response) => {
     try {
       const { search } = req.query;
       let cariHesaplar;
@@ -51,14 +55,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(cariHesaplar);
-    } catch (error) {
-      console.error("Cari hesaplar error:", error);
-      res.status(500).json({ message: "Cari hesaplar yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Cari hesap detayı
-  app.get("/api/cari-hesaplar/:id", async (req, res) => {
+  app.get("/api/cari-hesaplar/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -71,32 +78,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(cariHesap);
-    } catch (error) {
-      console.error("Cari hesap detay error:", error);
-      res.status(500).json({ message: "Cari hesap yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Yeni cari hesap oluştur
-  app.post("/api/cari-hesaplar", async (req, res) => {
+  app.post("/api/cari-hesaplar", async (req: Request, res: Response) => {
     try {
       const validatedData = cariHesapFormSchema.parse(req.body);
       const cariHesap = await storage.createCariHesap(validatedData as InsertCariHesap);
       res.status(201).json(cariHesap);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Cari hesap oluşturma error:", error);
-      res.status(500).json({ message: "Cari hesap oluşturulurken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Cari hesap güncelle
-  app.put("/api/cari-hesaplar/:id", async (req, res) => {
+  app.put("/api/cari-hesaplar/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -111,20 +124,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(cariHesap);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Cari hesap güncelleme error:", error);
-      res.status(500).json({ message: "Cari hesap güncellenirken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Cari hesap sil
-  app.delete("/api/cari-hesaplar/:id", async (req, res) => {
+  app.delete("/api/cari-hesaplar/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -137,16 +153,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(204).send();
-    } catch (error) {
-      console.error("Cari hesap silme error:", error);
-      res.status(500).json({ message: "Cari hesap silinirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // === YETKİLİ KİŞİLER ===
   
   // Cari hesaba ait yetkili kişiler
-  app.get("/api/cari-hesaplar/:cariId/yetkili-kisiler", async (req, res) => {
+  app.get("/api/cari-hesaplar/:cariId/yetkili-kisiler", async (req: Request, res: Response) => {
     try {
       const cariId = parseInt(req.params.cariId);
       if (isNaN(cariId)) {
@@ -155,34 +174,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const yetkiliKisiler = await storage.getYetkiliKisilerByCariId(cariId);
       res.json(yetkiliKisiler);
-    } catch (error) {
-      console.error("Yetkili kişiler error:", error);
-      res.status(500).json({ message: "Yetkili kişiler yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Yeni yetkili kişi ekle
-  app.post("/api/yetkili-kisiler", async (req, res) => {
+  app.post("/api/yetkili-kisiler", async (req: Request, res: Response) => {
     try {
-      const validatedData = insertYetkiliKisiSchema.parse(req.body);
-      const yetkiliKisi = await storage.createYetkiliKisi(validatedData as InsertYetkiliKisi);
+      const { ad, unvan, ...rest } = req.body;
+      const validatedData = insertYetkiliKisiSchema.parse({
+        ...rest,
+        adSoyad: ad,
+        gorevi: unvan,
+        departman: null
+      });
+      const yetkiliKisi = await storage.createYetkiliKisi(validatedData);
       res.status(201).json(yetkiliKisi);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Yetkili kişi oluşturma error:", error);
-      res.status(500).json({ message: "Yetkili kişi oluşturulurken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // === CARİ HAREKETLER ===
   
   // Cari hesaba ait hareketler
-  app.get("/api/cari-hesaplar/:cariId/hareketler", async (req, res) => {
+  app.get("/api/cari-hesaplar/:cariId/hareketler", async (req: Request, res: Response) => {
     try {
       const cariId = parseInt(req.params.cariId);
       if (isNaN(cariId)) {
@@ -192,34 +223,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
       const hareketler = await storage.getCariHareketlerByCariId(cariId, limit);
       res.json(hareketler);
-    } catch (error) {
-      console.error("Cari hareketler error:", error);
-      res.status(500).json({ message: "Cari hareketler yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Yeni cari hareket ekle
-  app.post("/api/cari-hareketler", async (req, res) => {
+  app.post("/api/cari-hareketler", async (req: Request, res: Response) => {
     try {
-      const validatedData = insertCariHareketSchema.parse(req.body);
-      const hareket = await storage.createCariHareket(validatedData as InsertCariHareket);
+      const { tip, tutar, ...rest } = req.body;
+      const validatedData = insertCariHareketSchema.parse({
+        ...rest,
+        tur: tip,
+        tutar: tutar,
+        bakiye: tutar, // Initial bakiye is same as tutar
+        projeId: null
+      });
+      const hareket = await storage.createCariHareket(validatedData);
       res.status(201).json(hareket);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Cari hareket oluşturma error:", error);
-      res.status(500).json({ message: "Cari hareket oluşturulurken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // === TEKLİFLER ===
   
   // Tüm teklifleri getir
-  app.get("/api/teklifler", async (req, res) => {
+  app.get("/api/teklifler", async (req: Request, res: Response) => {
     try {
       const { tur, search } = req.query;
       let teklifler;
@@ -233,14 +277,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(teklifler);
-    } catch (error) {
-      console.error("Teklifler error:", error);
-      res.status(500).json({ message: "Teklifler yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Teklif detayı
-  app.get("/api/teklifler/:id", async (req, res) => {
+  app.get("/api/teklifler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -256,14 +303,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const kalemler = await storage.getTeklifKalemleriByTeklifId(id);
       
       res.json({ ...teklif, kalemler });
-    } catch (error) {
-      console.error("Teklif detay error:", error);
-      res.status(500).json({ message: "Teklif yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Yeni teklif oluştur
-  app.post("/api/teklifler", async (req, res) => {
+  app.post("/api/teklifler", async (req: Request, res: Response) => {
     try {
       const { kalemler, ...teklifData } = req.body;
       
@@ -298,20 +348,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(201).json(teklif);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Teklif oluşturma error:", error);
-      res.status(500).json({ message: "Teklif oluşturulurken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Teklif güncelle
-  app.put("/api/teklifler/:id", async (req, res) => {
+  app.put("/api/teklifler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -338,20 +391,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(teklif);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Teklif güncelleme error:", error);
-      res.status(500).json({ message: "Teklif güncellenirken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Teklif sil
-  app.delete("/api/teklifler/:id", async (req, res) => {
+  app.delete("/api/teklifler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -367,16 +423,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(204).send();
-    } catch (error) {
-      console.error("Teklif silme error:", error);
-      res.status(500).json({ message: "Teklif silinirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // === PROJELER ===
   
   // Tüm projeleri getir
-  app.get("/api/projeler", async (req, res) => {
+  app.get("/api/projeler", async (req: Request, res: Response) => {
     try {
       const { durum, search } = req.query;
       let projeler;
@@ -390,14 +449,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(projeler);
-    } catch (error) {
-      console.error("Projeler error:", error);
-      res.status(500).json({ message: "Projeler yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Proje detayı
-  app.get("/api/projeler/:id", async (req, res) => {
+  app.get("/api/projeler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -410,14 +472,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(proje);
-    } catch (error) {
-      console.error("Proje detay error:", error);
-      res.status(500).json({ message: "Proje yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Yeni proje oluştur
-  app.post("/api/projeler", async (req, res) => {
+  app.post("/api/projeler", async (req: Request, res: Response) => {
     try {
       // Proje numarası otomatik oluştur
       const existingProjeler = await storage.getAllProjeler();
@@ -433,22 +498,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projeNo
       });
       
-      const proje = await storage.createProje(validatedData as InsertProje);
+      const proje = await storage.createProje(validatedData);
       res.status(201).json(proje);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Proje oluşturma error:", error);
-      res.status(500).json({ message: "Proje oluşturulurken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Proje güncelle
-  app.put("/api/projeler/:id", async (req, res) => {
+  app.put("/api/projeler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -463,20 +531,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(proje);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Proje güncelleme error:", error);
-      res.status(500).json({ message: "Proje güncellenirken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Proje sil
-  app.delete("/api/projeler/:id", async (req, res) => {
+  app.delete("/api/projeler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -489,16 +560,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(204).send();
-    } catch (error) {
-      console.error("Proje silme error:", error);
-      res.status(500).json({ message: "Proje silinirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // === GÖREVLER ===
   
   // Tüm görevleri getir
-  app.get("/api/gorevler", async (req, res) => {
+  app.get("/api/gorevler", async (req: Request, res: Response) => {
     try {
       const { durum, cariId, projeId, search } = req.query;
       let gorevler;
@@ -516,14 +590,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(gorevler);
-    } catch (error) {
-      console.error("Görevler error:", error);
-      res.status(500).json({ message: "Görevler yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Görev detayı
-  app.get("/api/gorevler/:id", async (req, res) => {
+  app.get("/api/gorevler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -536,32 +613,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(gorev);
-    } catch (error) {
-      console.error("Görev detay error:", error);
-      res.status(500).json({ message: "Görev yüklenirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Yeni görev oluştur
-  app.post("/api/gorevler", async (req, res) => {
+  app.post("/api/gorevler", async (req: Request, res: Response) => {
     try {
       const validatedData = gorevFormSchema.parse(req.body);
-      const gorev = await storage.createGorev(validatedData as InsertGorev);
+      const gorev = await storage.createGorev(validatedData);
       res.status(201).json(gorev);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Görev oluşturma error:", error);
-      res.status(500).json({ message: "Görev oluşturulurken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Görev güncelle
-  app.put("/api/gorevler/:id", async (req, res) => {
+  app.put("/api/gorevler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -576,20 +659,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(gorev);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Geçersiz veri", 
           errors: error.errors 
         });
       }
-      console.error("Görev güncelleme error:", error);
-      res.status(500).json({ message: "Görev güncellenirken hata oluştu" });
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 
   // Görev sil
-  app.delete("/api/gorevler/:id", async (req, res) => {
+  app.delete("/api/gorevler/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -602,9 +688,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(204).send();
-    } catch (error) {
-      console.error("Görev silme error:", error);
-      res.status(500).json({ message: "Görev silinirken hata oluştu" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   });
 

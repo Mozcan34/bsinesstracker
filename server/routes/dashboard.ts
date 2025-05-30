@@ -1,42 +1,48 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+import { storage } from '../storage';
 
 const router = Router();
 
-router.get('/api/dashboard/stats', (req, res) => {
-  res.json({
-    totalUsers: 150,
-    activeProjects: 25,
-    completedTasks: 75,
-    pendingTasks: 30
-  });
+router.get('/stats', async (req: Request, res: Response) => {
+  try {
+    const { period = 'thisMonth' } = req.query;
+    const stats = await storage.getDashboardStats(period as string);
+    res.json(stats);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  }
 });
 
-router.get('/api/dashboard/activities', (req, res) => {
-  res.json([
-    { id: 1, type: 'project', action: 'created', date: new Date() },
-    { id: 2, type: 'task', action: 'completed', date: new Date() }
-  ]);
+router.get('/recent-activities', async (req: Request, res: Response) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const activities = await storage.getRecentActivities(limit);
+    res.json(activities);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  }
 });
 
-router.get('/api/dashboard/active-projects', (req, res) => {
-  res.json([
-    { id: 1, name: 'Website Redesign', progress: 75 },
-    { id: 2, name: 'Mobile App Development', progress: 45 }
-  ]);
-});
-
-router.get('/api/dashboard/upcoming-tasks', (req, res) => {
-  res.json([
-    { id: 1, title: 'Client Meeting', dueDate: new Date() },
-    { id: 2, title: 'Project Review', dueDate: new Date() }
-  ]);
-});
-
-router.get('/api/dashboard/recent-quotes', (req, res) => {
-  res.json([
-    { id: 1, client: 'ABC Corp', amount: 5000 },
-    { id: 2, client: 'XYZ Ltd', amount: 7500 }
-  ]);
+router.get('/upcoming-tasks', async (req: Request, res: Response) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+    const tasks = await storage.getUpcomingTasks(limit);
+    res.json(tasks);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  }
 });
 
 export default router; 

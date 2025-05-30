@@ -61,6 +61,8 @@ export interface IStorage {
 
   // Dashboard
   getDashboardStats(period?: string): Promise<any>;
+  getRecentActivities(limit?: number): Promise<any>;
+  getUpcomingTasks(limit?: number): Promise<Gorev[]>;
 }
 
 // Geçici in-memory storage
@@ -218,9 +220,10 @@ export class MemoryStorage implements IStorage {
       cariHesapId: data.cariHesapId,
       adSoyad: data.adSoyad,
       gorevi: data.gorevi || null,
+      departman: data.departman || null,
       telefon: data.telefon || null,
       email: data.email || null,
-      departman: data.departman || null,
+      notlar: data.notlar || null,
       createdAt: now,
       updatedAt: now
     };
@@ -292,11 +295,11 @@ export class MemoryStorage implements IStorage {
       teklifNo: data.teklifNo,
       teklifTuru: data.teklifTuru,
       teklifKonusu: data.teklifKonusu,
-      teklifDurumu: data.teklifDurumu || null,
+      teklifDurumu: data.teklifDurumu,
       odemeSekli: data.odemeSekli || null,
       gecerlilikSuresi: data.gecerlilikSuresi || null,
       paraBirimi: data.paraBirimi || null,
-      toplamTutar: data.toplamTutar || null,
+      toplamTutar: data.toplamTutar,
       notlar: data.notlar || null,
       dosyalar: data.dosyalar || null,
       tarih: data.tarih,
@@ -360,7 +363,7 @@ export class MemoryStorage implements IStorage {
       tutar: data.tutar,
       iskontoTutari: data.iskontoTutari || null,
       netTutar: data.netTutar,
-      kdvOrani: data.kdvOrani || null,
+      kdvOrani: data.kdvOrani,
       toplamTutar: data.toplamTutar,
       createdAt: now
     };
@@ -396,7 +399,7 @@ export class MemoryStorage implements IStorage {
       teklifId: data.teklifId || null,
       projeNo: data.projeNo,
       projeAdi: data.projeAdi,
-      projeDurumu: data.projeDurumu || null,
+      projeDurumu: data.projeDurumu,
       projeTarihi: data.projeTarihi,
       sonTeslimTarihi: data.sonTeslimTarihi || null,
       butce: data.butce || null,
@@ -464,13 +467,13 @@ export class MemoryStorage implements IStorage {
       id,
       baslik: data.baslik,
       aciklama: data.aciklama || null,
-      durum: data.durum || null,
-      oncelik: data.oncelik || null,
-      baslangicTarihi: data.baslangicTarihi || null,
+      durum: data.durum,
+      oncelik: data.oncelik,
+      baslangicTarihi: data.baslangicTarihi,
       bitisTarihi: data.bitisTarihi || null,
       sonTeslimTarihi: data.sonTeslimTarihi || null,
       atananKisi: data.atananKisi || null,
-      cariHesapId: data.cariHesapId || null,
+      cariHesapId: data.cariHesapId,
       projeId: data.projeId || null,
       userId: data.userId || null,
       siralama: data.siralama || null,
@@ -530,132 +533,123 @@ export class MemoryStorage implements IStorage {
   }
 
   async getDashboardStats(period: string = 'thisMonth'): Promise<any> {
-    // Tarih aralığını belirle
     const now = new Date();
     let startDate: Date;
 
     switch (period) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
       case 'thisWeek':
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
         break;
-      case 'thisQuarter':
-        const quarterStart = Math.floor(now.getMonth() / 3) * 3;
-        startDate = new Date(now.getFullYear(), quarterStart, 1);
+      case 'thisMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         break;
       case 'thisYear':
         startDate = new Date(now.getFullYear(), 0, 1);
         break;
-      case 'lastMonth':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        break;
-      case 'lastQuarter':
-        const lastQuarterStart = Math.floor(now.getMonth() / 3) * 3 - 3;
-        startDate = new Date(now.getFullYear(), lastQuarterStart, 1);
-        break;
-      case 'lastYear':
-        startDate = new Date(now.getFullYear() - 1, 0, 1);
-        break;
-      default: // thisMonth
+      default:
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
-    // Toplam sayılar
-    const cariHesaplarArray = Array.from(this.cariHesaplar.values()).filter(c => c.isActive);
-    const totalCariHesaplar = cariHesaplarArray.length;
-    const tekliflerArray = Array.from(this.teklifler.values());
-    const totalTeklifler = tekliflerArray.length;
-    const projelerArray = Array.from(this.projeler.values());
-    const totalProjeler = projelerArray.length;
-    const gorevlerArray = Array.from(this.gorevler.values());
-    const totalGorevler = gorevlerArray.length;
+    const cariHesaplarArray = Array.from(this.cariHesaplar.values());
+    const tekliflerArray = Array.from(this.teklifler.values())
+      .filter(t => new Date(t.createdAt) >= startDate);
+    const projelerArray = Array.from(this.projeler.values())
+      .filter(p => new Date(p.createdAt) >= startDate);
+    const gorevlerArray = Array.from(this.gorevler.values())
+      .filter(g => new Date(g.createdAt) >= startDate);
 
-    // Teklif durum dağılımı
-    const teklifDurumDagilimi = tekliflerArray.reduce((acc, teklif) => {
-      const durum = teklif.teklifDurumu || 'Belirsiz';
-      acc[durum] = (acc[durum] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const teklifDurumDagilimiArray = Object.entries(teklifDurumDagilimi).map(([name, value]) => ({
-      name,
-      value
-    }));
-
-    // Proje durum dağılımı
-    const projeDurumDagilimi = projelerArray.reduce((acc, proje) => {
-      const durum = proje.projeDurumu || 'Belirsiz';
-      acc[durum] = (acc[durum] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const projeDurumDagilimiArray = Object.entries(projeDurumDagilimi).map(([name, value]) => ({
-      name,
-      value
-    }));
-
-    // Görev durum dağılımı
-    const gorevDurumDagilimi = gorevlerArray.reduce((acc, gorev) => {
-      const durum = gorev.durum || 'Belirsiz';
-      acc[durum] = (acc[durum] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const gorevDurumDagilimiArray = Object.entries(gorevDurumDagilimi).map(([name, value]) => ({
-      name,
-      value
-    }));
-
-    // Cari tip dağılımı
-    const cariTipDagilimi = cariHesaplarArray.reduce((acc, cari) => {
-      const tip = cari.firmaTuru || 'Belirsiz';
-      acc[tip] = (acc[tip] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const cariTipDagilimiArray = Object.entries(cariTipDagilimi).map(([name, value]) => ({
-      name,
-      value
-    }));
-
-    // Aylık teklif trendi (son 6 ay)
-    const nowForTrend = new Date();
-    const aylikTeklifTrendi = [];
-    for (let i = 5; i >= 0; i--) {
-      const month = nowForTrend.getMonth() - i;
-      const year = nowForTrend.getFullYear();
-      const trendMonth = new Date(year, month, 1);
-      const monthName = trendMonth.toLocaleDateString('tr-TR', { month: 'short', year: 'numeric' });
-
-      const teklifSayisi = tekliflerArray.filter(teklif => {
-          const teklifTarih = new Date(teklif.createdAt);
-          return teklifTarih.getFullYear() === trendMonth.getFullYear() &&
-                 teklifTarih.getMonth() === trendMonth.getMonth();
-      }).length;
-
-      const toplamTutar = tekliflerArray.filter(teklif => {
-          const teklifTarih = new Date(teklif.createdAt);
-          return teklifTarih.getFullYear() === trendMonth.getFullYear() &&
-                 teklifTarih.getMonth() === trendMonth.getMonth();
-      }).reduce((sum, teklif) => sum + Number(teklif.toplamTutar || 0), 0);
-        
-      aylikTeklifTrendi.push({
-          month: monthName,
-          teklifSayisi,
-          toplamTutar
-      });
-    }
-
-    return {
-      totalCariHesaplar,
-      totalTeklifler,
-      totalProjeler,
-      totalGorevler,
-      teklifDurumDagilimi: teklifDurumDagilimiArray,
-      projeDurumDagilimi: projeDurumDagilimiArray,
-      gorevDurumDagilimi: gorevDurumDagilimiArray,
-      cariTipDagilimi: cariTipDagilimiArray,
-      aylikTeklifTrendi
+    const stats = {
+      cariHesaplar: {
+        toplam: cariHesaplarArray.length,
+        tip: {
+          alici: cariHesaplarArray.filter(c => c.firmaTuru === 'Alıcı').length,
+          satici: cariHesaplarArray.filter(c => c.firmaTuru === 'Satıcı').length
+        }
+      },
+      teklifler: {
+        toplam: tekliflerArray.length,
+        durum: {
+          beklemede: tekliflerArray.filter(t => t.teklifDurumu === 'Beklemede').length,
+          onaylandi: tekliflerArray.filter(t => t.teklifDurumu === 'Onaylandı').length,
+          reddedildi: tekliflerArray.filter(t => t.teklifDurumu === 'Reddedildi').length
+        }
+      },
+      projeler: {
+        toplam: projelerArray.length,
+        durum: {
+          devamEdiyor: projelerArray.filter(p => p.projeDurumu === 'Devam Ediyor').length,
+          tamamlandi: projelerArray.filter(p => p.projeDurumu === 'Tamamlandı').length,
+          beklemede: projelerArray.filter(p => p.projeDurumu === 'Beklemede').length
+        }
+      },
+      gorevler: {
+        toplam: gorevlerArray.length,
+        durum: {
+          bekliyor: gorevlerArray.filter(g => g.durum === 'Bekliyor').length,
+          devamEdiyor: gorevlerArray.filter(g => g.durum === 'Devam Ediyor').length,
+          tamamlandi: gorevlerArray.filter(g => g.durum === 'Tamamlandı').length
+        }
+      }
     };
+
+    return stats;
+  }
+
+  async getRecentActivities(limit: number = 10): Promise<any> {
+    const activities = [];
+    
+    // Son eklenen görevler
+    const recentTasks = Array.from(this.gorevler.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit)
+      .map(task => ({
+        type: 'task',
+        title: task.baslik,
+        date: task.createdAt,
+        status: task.durum
+      }));
+    
+    // Son eklenen teklifler
+    const recentQuotes = Array.from(this.teklifler.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit)
+      .map(quote => ({
+        type: 'quote',
+        title: quote.teklifNo,
+        date: quote.createdAt,
+        status: quote.teklifDurumu
+      }));
+    
+    // Son eklenen projeler
+    const recentProjects = Array.from(this.projeler.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit)
+      .map(project => ({
+        type: 'project',
+        title: project.projeAdi,
+        date: project.createdAt,
+        status: project.projeDurumu
+      }));
+    
+    // Tüm aktiviteleri birleştir, sırala ve limitle
+    return [...recentTasks, ...recentQuotes, ...recentProjects]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, limit);
+  }
+
+  async getUpcomingTasks(limit: number = 5): Promise<Gorev[]> {
+    const now = new Date();
+    return Array.from(this.gorevler.values())
+      .filter(task => 
+        task.durum !== 'Tamamlandı' && 
+        task.baslangicTarihi && 
+        new Date(task.baslangicTarihi) > now
+      )
+      .sort((a, b) => new Date(a.baslangicTarihi).getTime() - new Date(b.baslangicTarihi).getTime())
+      .slice(0, limit);
   }
 }
 

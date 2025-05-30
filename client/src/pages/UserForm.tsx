@@ -24,17 +24,6 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
-// Field tipi tanımı
-type FieldProps = {
-  field: {
-    value: string;
-    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    onBlur: () => void;
-    name: string;
-    ref: React.Ref<HTMLInputElement>;
-  };
-};
-
 export default function UserForm() {
   const [, navigate] = useLocation();
   const { toast } = useToast();

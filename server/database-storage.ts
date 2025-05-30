@@ -31,58 +31,139 @@ export class DatabaseStorage implements IStorage {
 
   // Cari Hesaplar
   async getAllCariHesaplar(): Promise<CariHesap[]> {
-    return await this.getDbInstance().select().from(cariHesaplar);
+    const results = await this.getDbInstance().select().from(cariHesaplar);
+    return results.map(r => ({
+      id: r.id,
+      firmaAdi: r.firmaAdi,
+      firmaTuru: r.firmaTuru,
+      subeBolge: r.subeBolge,
+      vergiDairesi: r.vergiDairesi,
+      vergiNo: r.vergiNo,
+      adres: r.adres,
+      telefon: r.telefon,
+      email: r.email,
+      notlar: r.notlar,
+      isActive: r.isActive ?? true,
+      createdAt: r.createdAt ?? new Date(),
+      updatedAt: r.updatedAt ?? new Date()
+    }));
   }
 
   async getCariHesapById(id: number): Promise<CariHesap | undefined> {
-    const [account] = await this.getDbInstance().select().from(cariHesaplar).where(eq(cariHesaplar.id, id));
-    return account;
+    const [result] = await this.getDbInstance().select().from(cariHesaplar).where(eq(cariHesaplar.id, id));
+    if (!result) return undefined;
+    return {
+      id: result.id,
+      firmaAdi: result.firmaAdi,
+      firmaTuru: result.firmaTuru,
+      subeBolge: result.subeBolge,
+      vergiDairesi: result.vergiDairesi,
+      vergiNo: result.vergiNo,
+      adres: result.adres,
+      telefon: result.telefon,
+      email: result.email,
+      notlar: result.notlar,
+      isActive: result.isActive ?? true,
+      createdAt: result.createdAt ?? new Date(),
+      updatedAt: result.updatedAt ?? new Date()
+    };
   }
 
   async createCariHesap(data: InsertCariHesap): Promise<CariHesap> {
-    const insertData = {
+    const [created] = await this.getDbInstance().insert(cariHesaplar).values({
       firmaAdi: data.firmaAdi,
       firmaTuru: data.firmaTuru,
       subeBolge: data.subeBolge ?? null,
+      vergiDairesi: data.vergiDairesi ?? null,
+      vergiNo: data.vergiNo ?? null,
+      adres: data.adres ?? null,
       telefon: data.telefon ?? null,
       email: data.email ?? null,
-      adres: data.adres ?? null,
-      vergiNo: data.vergiNo ?? null,
-      vergiDairesi: data.vergiDairesi ?? null,
       notlar: data.notlar ?? null,
-      isActive: data.isActive !== undefined ? data.isActive : true,
+      isActive: true
+    }).returning();
+
+    return {
+      id: created.id,
+      firmaAdi: created.firmaAdi,
+      firmaTuru: created.firmaTuru,
+      subeBolge: created.subeBolge,
+      vergiDairesi: created.vergiDairesi,
+      vergiNo: created.vergiNo,
+      adres: created.adres,
+      telefon: created.telefon,
+      email: created.email,
+      notlar: created.notlar,
+      isActive: created.isActive ?? true,
+      createdAt: created.createdAt ?? new Date(),
+      updatedAt: created.updatedAt ?? new Date()
     };
-    const [created] = await this.getDbInstance().insert(cariHesaplar).values(insertData).returning();
-    return created;
   }
 
   async updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | undefined> {
-    const valuesToUpdate = removeUndefinedProps(data);
-    if (Object.keys(valuesToUpdate).length === 0) {
-      return this.getCariHesapById(id);
-    }
     const [updated] = await this.getDbInstance()
       .update(cariHesaplar)
-      .set(valuesToUpdate)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
       .where(eq(cariHesaplar.id, id))
       .returning();
-    return updated;
+
+    if (!updated) return undefined;
+
+    return {
+      id: updated.id,
+      firmaAdi: updated.firmaAdi,
+      firmaTuru: updated.firmaTuru,
+      subeBolge: updated.subeBolge,
+      vergiDairesi: updated.vergiDairesi,
+      vergiNo: updated.vergiNo,
+      adres: updated.adres,
+      telefon: updated.telefon,
+      email: updated.email,
+      notlar: updated.notlar,
+      isActive: updated.isActive ?? true,
+      createdAt: updated.createdAt ?? new Date(),
+      updatedAt: updated.updatedAt ?? new Date()
+    };
   }
 
   async deleteCariHesap(id: number): Promise<boolean> {
-    await this.getDbInstance().delete(cariHesaplar).where(eq(cariHesaplar.id, id));
-    return true;
+    const [deleted] = await this.getDbInstance()
+      .update(cariHesaplar)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(cariHesaplar.id, id))
+      .returning();
+    return !!deleted;
   }
 
   async searchCariHesaplar(query: string): Promise<CariHesap[]> {
-    const lowerQuery = query.toLowerCase();
     const results = await this.getDbInstance().select().from(cariHesaplar);
-    return results.filter(c =>
-      c.firmaAdi.toLowerCase().includes(lowerQuery) ||
-      c.subeBolge?.toLowerCase().includes(lowerQuery) ||
-      c.telefon?.toLowerCase().includes(lowerQuery) ||
-      c.email?.toLowerCase().includes(lowerQuery)
-    );
+    const lowerQuery = query.toLowerCase();
+    return results
+      .filter(c => c.isActive)
+      .filter(c =>
+        c.firmaAdi.toLowerCase().includes(lowerQuery) ||
+        c.subeBolge?.toLowerCase().includes(lowerQuery) ||
+        c.telefon?.toLowerCase().includes(lowerQuery) ||
+        c.email?.toLowerCase().includes(lowerQuery)
+      )
+      .map(r => ({
+        id: r.id,
+        firmaAdi: r.firmaAdi,
+        firmaTuru: r.firmaTuru,
+        subeBolge: r.subeBolge,
+        vergiDairesi: r.vergiDairesi,
+        vergiNo: r.vergiNo,
+        adres: r.adres,
+        telefon: r.telefon,
+        email: r.email,
+        notlar: r.notlar,
+        isActive: r.isActive ?? true,
+        createdAt: r.createdAt ?? new Date(),
+        updatedAt: r.updatedAt ?? new Date()
+      }));
   }
 
   // Yetkili Kişiler
@@ -380,5 +461,19 @@ export class DatabaseStorage implements IStorage {
   async getDashboardStats(period: string = 'thisMonth'): Promise<any> {
     // Bu metodu daha sonra implement edeceğiz
     return {};
+  }
+
+  async getRecentActivities(limit: number = 10): Promise<any> {
+    // TODO: Implement this method
+    return [];
+  }
+
+  async getUpcomingTasks(limit: number = 5): Promise<Gorev[]> {
+    const results = await this.getDbInstance()
+      .select()
+      .from(gorevler)
+      .where(eq(gorevler.durum, "Bekliyor"))
+      .limit(limit);
+    return results;
   }
 }

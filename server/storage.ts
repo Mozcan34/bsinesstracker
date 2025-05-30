@@ -3,8 +3,23 @@ import {
   type Teklif, type TeklifKalemi, type Proje, type Gorev,
   type InsertCariHesap, type InsertYetkiliKisi,
   type InsertCariHareket, type InsertTeklif, type InsertTeklifKalemi,
-  type InsertProje, type InsertGorev
+  type InsertProje, type InsertGorev,
+  cariHesaplar, yetkiliKisiler, cariHareketler, teklifler,
+  teklifKalemleri, projeler, gorevler
 } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { db } from './db';
+
+// Helper function to remove undefined properties from an object
+function removeUndefinedProps<T extends Record<string, any>>(obj: T): T {
+  const newObj = { ...obj };
+  for (const key in newObj) {
+    if (newObj[key] === undefined) {
+      delete newObj[key];
+    }
+  }
+  return newObj;
+}
 
 export interface IStorage {
   // Cari Hesaplar
@@ -84,6 +99,10 @@ export class MemoryStorage implements IStorage {
     gorev: 1
   };
 
+  private getDbInstance() {
+    return db;
+  }
+
   constructor() {
     this.initSampleData();
   }
@@ -136,7 +155,11 @@ export class MemoryStorage implements IStorage {
   async getAllCariHesaplar(): Promise<CariHesap[]> {
     return Array.from(this.cariHesaplar.values())
       .filter(c => c.isActive)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
 
   async getCariHesapById(id: number): Promise<CariHesap | undefined> {
@@ -166,16 +189,33 @@ export class MemoryStorage implements IStorage {
   }
 
   async updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | undefined> {
-    const existing = this.cariHesaplar.get(id);
-    if (!existing) return undefined;
+    const [updated] = await this.getDbInstance()
+      .update(cariHesaplar)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+        isActive: data.isActive ?? true
+      })
+      .where(eq(cariHesaplar.id, id))
+      .returning();
 
-    const updated: CariHesap = {
-      ...existing,
-      ...data,
-      updatedAt: new Date()
+    if (!updated) return undefined;
+
+    return {
+      id: updated.id,
+      firmaAdi: updated.firmaAdi,
+      firmaTuru: updated.firmaTuru,
+      subeBolge: updated.subeBolge,
+      vergiDairesi: updated.vergiDairesi,
+      vergiNo: updated.vergiNo,
+      adres: updated.adres,
+      telefon: updated.telefon,
+      email: updated.email,
+      notlar: updated.notlar,
+      isActive: updated.isActive ?? true,
+      createdAt: updated.createdAt ?? new Date(),
+      updatedAt: updated.updatedAt ?? new Date()
     };
-    this.cariHesaplar.set(id, updated);
-    return updated;
   }
 
   async deleteCariHesap(id: number): Promise<boolean> {
@@ -209,26 +249,25 @@ export class MemoryStorage implements IStorage {
   async getYetkiliKisilerByCariId(cariHesapId: number): Promise<YetkiliKisi[]> {
     return Array.from(this.yetkiliKisiler.values())
       .filter(y => y.cariHesapId === cariHesapId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
 
   async createYetkiliKisi(data: InsertYetkiliKisi): Promise<YetkiliKisi> {
-    const id = this.currentIds.yetkiliKisi++;
-    const now = new Date();
-    const yetkiliKisi: YetkiliKisi = {
-      id,
+    const valuesToInsert = {
+      ...removeUndefinedProps(data),
       cariHesapId: data.cariHesapId,
       adSoyad: data.adSoyad,
-      gorevi: data.gorevi || null,
-      departman: data.departman || null,
-      telefon: data.telefon || null,
-      email: data.email || null,
-      notlar: data.notlar || null,
-      createdAt: now,
-      updatedAt: now
     };
-    this.yetkiliKisiler.set(id, yetkiliKisi);
-    return yetkiliKisi;
+    const [created] = await this.getDbInstance().insert(yetkiliKisiler).values(valuesToInsert).returning();
+    return {
+      ...created,
+      createdAt: created.createdAt ?? new Date(),
+      updatedAt: created.updatedAt ?? new Date()
+    };
   }
 
   async updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined> {
@@ -252,27 +291,31 @@ export class MemoryStorage implements IStorage {
   async getCariHareketlerByCariId(cariHesapId: number, limit: number = 25): Promise<CariHareket[]> {
     return Array.from(this.cariHareketler.values())
       .filter(h => h.cariHesapId === cariHesapId)
-      .sort((a, b) => new Date(b.tarih).getTime() - new Date(a.tarih).getTime())
+      .sort((a, b) => {
+        const dateA = a.tarih ? new Date(a.tarih).getTime() : 0;
+        const dateB = b.tarih ? new Date(b.tarih).getTime() : 0;
+        return dateB - dateA;
+      })
       .slice(0, limit);
   }
 
   async createCariHareket(data: InsertCariHareket): Promise<CariHareket> {
-    const id = this.currentIds.cariHareket++;
-    const now = new Date();
-    const hareket: CariHareket = {
-      id,
+    const valuesToInsert = {
+      ...removeUndefinedProps(data),
       cariHesapId: data.cariHesapId,
-      tarih: data.tarih,
       aciklama: data.aciklama,
+      tarih: data.tarih ?? new Date(),
       tur: data.tur,
       tutar: data.tutar,
       bakiye: data.bakiye,
-      projeId: data.projeId || null,
-      createdAt: now,
-      updatedAt: now
     };
-    this.cariHareketler.set(id, hareket);
-    return hareket;
+    const [created] = await this.getDbInstance().insert(cariHareketler).values(valuesToInsert).returning();
+    return {
+      ...created,
+      tarih: created.tarih ?? new Date(),
+      createdAt: created.createdAt ?? new Date(),
+      updatedAt: created.updatedAt ?? new Date()
+    };
   }
 
   // Teklifler CRUD
@@ -302,7 +345,7 @@ export class MemoryStorage implements IStorage {
       toplamTutar: data.toplamTutar,
       notlar: data.notlar || null,
       dosyalar: data.dosyalar || null,
-      tarih: data.tarih,
+      tarih: now,
       createdAt: now,
       updatedAt: now
     };
@@ -453,7 +496,15 @@ export class MemoryStorage implements IStorage {
   // Görevler CRUD
   async getAllGorevler(): Promise<Gorev[]> {
     return Array.from(this.gorevler.values())
-      .sort((a, b) => (a.siralama || 0) - (b.siralama || 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const siraA = a.siralama || 0;
+        const siraB = b.siralama || 0;
+        if (siraA !== siraB) return siraA - siraB;
+        
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
 
   async getGorevById(id: number): Promise<Gorev | undefined> {
@@ -461,29 +512,28 @@ export class MemoryStorage implements IStorage {
   }
 
   async createGorev(data: InsertGorev): Promise<Gorev> {
-    const id = this.currentIds.gorev++;
-    const now = new Date();
-    const gorev: Gorev = {
-      id,
+    const insertData = {
       baslik: data.baslik,
-      aciklama: data.aciklama || null,
+      aciklama: data.aciklama ?? null,
       durum: data.durum,
       oncelik: data.oncelik,
       baslangicTarihi: data.baslangicTarihi,
-      bitisTarihi: data.bitisTarihi || null,
-      sonTeslimTarihi: data.sonTeslimTarihi || null,
-      atananKisi: data.atananKisi || null,
+      bitisTarihi: data.bitisTarihi ?? null,
+      sonTeslimTarihi: data.sonTeslimTarihi ?? null,
+      atananKisi: data.atananKisi ?? null,
       cariHesapId: data.cariHesapId,
-      projeId: data.projeId || null,
-      userId: data.userId || null,
-      siralama: data.siralama || null,
-      etiketler: data.etiketler || null,
-      dosyalar: data.dosyalar || null,
-      createdAt: now,
-      updatedAt: now
+      projeId: data.projeId ?? null,
+      userId: data.userId ?? null,
+      siralama: data.siralama ?? 0,
+      etiketler: data.etiketler ?? null,
+      dosyalar: data.dosyalar ?? null,
     };
-    this.gorevler.set(id, gorev);
-    return gorev;
+    const [created] = await this.getDbInstance().insert(gorevler).values(insertData).returning();
+    return {
+      ...created,
+      createdAt: created.createdAt ?? new Date(),
+      updatedAt: created.updatedAt ?? new Date()
+    };
   }
 
   async updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | undefined> {
@@ -506,19 +556,35 @@ export class MemoryStorage implements IStorage {
   async getGorevlerByDurum(durum: string): Promise<Gorev[]> {
     return Array.from(this.gorevler.values())
       .filter(g => g.durum === durum)
-      .sort((a, b) => (a.siralama || 0) - (b.siralama || 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const siraA = a.siralama || 0;
+        const siraB = b.siralama || 0;
+        if (siraA !== siraB) return siraA - siraB;
+        
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
 
   async getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]> {
     return Array.from(this.gorevler.values())
       .filter(g => g.cariHesapId === cariHesapId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
 
   async getGorevlerByProjeId(projeId: number): Promise<Gorev[]> {
     return Array.from(this.gorevler.values())
       .filter(g => g.projeId === projeId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
 
   async searchGorevler(query: string): Promise<Gorev[]> {
@@ -529,7 +595,11 @@ export class MemoryStorage implements IStorage {
         g.aciklama?.toLowerCase().includes(lowerQuery) ||
         g.atananKisi?.toLowerCase().includes(lowerQuery)
       )
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
   }
 
   async getDashboardStats(period: string = 'thisMonth'): Promise<any> {
@@ -555,11 +625,11 @@ export class MemoryStorage implements IStorage {
 
     const cariHesaplarArray = Array.from(this.cariHesaplar.values());
     const tekliflerArray = Array.from(this.teklifler.values())
-      .filter(t => new Date(t.createdAt) >= startDate);
+      .filter(t => t.createdAt && new Date(t.createdAt) >= startDate);
     const projelerArray = Array.from(this.projeler.values())
-      .filter(p => new Date(p.createdAt) >= startDate);
+      .filter(p => p.createdAt && new Date(p.createdAt) >= startDate);
     const gorevlerArray = Array.from(this.gorevler.values())
-      .filter(g => new Date(g.createdAt) >= startDate);
+      .filter(g => g.createdAt && new Date(g.createdAt) >= startDate);
 
     const stats = {
       cariHesaplar: {
@@ -603,7 +673,11 @@ export class MemoryStorage implements IStorage {
     
     // Son eklenen görevler
     const recentTasks = Array.from(this.gorevler.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      })
       .slice(0, limit)
       .map(task => ({
         type: 'task',
@@ -614,7 +688,11 @@ export class MemoryStorage implements IStorage {
     
     // Son eklenen teklifler
     const recentQuotes = Array.from(this.teklifler.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      })
       .slice(0, limit)
       .map(quote => ({
         type: 'quote',
@@ -625,7 +703,11 @@ export class MemoryStorage implements IStorage {
     
     // Son eklenen projeler
     const recentProjects = Array.from(this.projeler.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      })
       .slice(0, limit)
       .map(project => ({
         type: 'project',
@@ -636,7 +718,11 @@ export class MemoryStorage implements IStorage {
     
     // Tüm aktiviteleri birleştir, sırala ve limitle
     return [...recentTasks, ...recentQuotes, ...recentProjects]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      })
       .slice(0, limit);
   }
 

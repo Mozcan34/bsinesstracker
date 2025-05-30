@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
 
 // API isteği için temel URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -62,7 +63,12 @@ export async function apiRequest(
 // Kimlik doğrulama fonksiyonları
 export async function login(username: string, password: string) {
   const response = await apiRequest("POST", "/api/auth/login", { username, password });
-  const user = await response.json();
+  const { user, token } = await response.json();
+  
+  // Store the user and token
+  useAuth.getState().setUser(user);
+  useAuth.getState().setToken(token);
+  
   return user;
 }
 

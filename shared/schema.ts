@@ -1,5 +1,4 @@
 import { pgTable, text, serial, timestamp, varchar, numeric, boolean, integer, decimal } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Kullanıcılar tablosu
@@ -18,14 +17,16 @@ export const users = pgTable("users", {
 // Cari Hesaplar tablosu
 export const cariHesaplar = pgTable("cari_hesaplar", {
   id: serial("id").primaryKey(),
-  ad: text("ad").notNull(),
-  tip: text("tip").notNull(),
+  firmaAdi: text("firma_adi").notNull(),
+  firmaTuru: text("firma_turu").notNull(),
+  subeBolge: text("sube_bolge"),
   vergiDairesi: text("vergi_dairesi"),
   vergiNo: text("vergi_no"),
   adres: text("adres"),
   telefon: text("telefon"),
   email: text("email"),
   notlar: text("notlar"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
@@ -34,25 +35,11 @@ export const cariHesaplar = pgTable("cari_hesaplar", {
 export const yetkiliKisiler = pgTable("yetkili_kisiler", {
   id: serial("id").primaryKey(),
   cariHesapId: integer("cari_hesap_id").notNull(),
-  ad: text("ad").notNull(),
-  unvan: text("unvan"),
+  adSoyad: text("ad_soyad").notNull(),
+  gorevi: text("gorevi"),
+  departman: text("departman"),
   telefon: text("telefon"),
   email: text("email"),
-  notlar: text("notlar"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-});
-
-// Projeler tablosu
-export const projeler = pgTable("projeler", {
-  id: serial("id").primaryKey(),
-  cariHesapId: integer("cari_hesap_id").notNull(),
-  projeNo: text("proje_no").notNull(),
-  projeAdi: text("proje_adi").notNull(),
-  baslangicTarihi: timestamp("baslangic_tarihi").notNull(),
-  bitisTarihi: timestamp("bitis_tarihi"),
-  durum: text("durum").notNull(),
-  butce: decimal("butce"),
   notlar: text("notlar"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -62,9 +49,11 @@ export const projeler = pgTable("projeler", {
 export const cariHareketler = pgTable("cari_hareketler", {
   id: serial("id").primaryKey(),
   cariHesapId: integer("cari_hesap_id").notNull(),
-  tip: text("tip").notNull(),
+  tur: text("tur").notNull(),
   tutar: decimal("tutar").notNull(),
+  bakiye: decimal("bakiye").notNull(),
   aciklama: text("aciklama"),
+  projeId: integer("proje_id"),
   tarih: timestamp("tarih").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -74,12 +63,18 @@ export const cariHareketler = pgTable("cari_hareketler", {
 export const teklifler = pgTable("teklifler", {
   id: serial("id").primaryKey(),
   cariHesapId: integer("cari_hesap_id").notNull(),
+  yetkiliKisiId: integer("yetkili_kisi_id"),
   teklifNo: text("teklif_no").notNull(),
-  teklifTarihi: timestamp("teklif_tarihi").notNull(),
-  gecerlilikTarihi: timestamp("gecerlilik_tarihi"),
-  durum: text("durum").notNull(),
+  teklifTuru: text("teklif_turu").notNull(),
+  teklifKonusu: text("teklif_konusu").notNull(),
+  teklifDurumu: text("teklif_durumu").notNull(),
+  odemeSekli: text("odeme_sekli"),
+  gecerlilikSuresi: text("gecerlilik_suresi"),
+  paraBirimi: text("para_birimi"),
   toplamTutar: decimal("toplam_tutar").notNull(),
   notlar: text("notlar"),
+  dosyalar: text("dosyalar").array(),
+  tarih: timestamp("tarih").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
@@ -88,111 +83,107 @@ export const teklifler = pgTable("teklifler", {
 export const teklifKalemleri = pgTable("teklif_kalemleri", {
   id: serial("id").primaryKey(),
   teklifId: integer("teklif_id").notNull(),
-  urunKodu: text("urun_kodu").notNull(),
-  urunAdi: text("urun_adi").notNull(),
+  urunHizmetAdi: text("urun_hizmet_adi").notNull(),
   miktar: decimal("miktar").notNull(),
   birim: text("birim").notNull(),
   birimFiyat: decimal("birim_fiyat").notNull(),
+  tutar: decimal("tutar").notNull(),
+  iskontoTutari: decimal("iskonto_tutari"),
+  netTutar: decimal("net_tutar").notNull(),
   kdvOrani: decimal("kdv_orani").notNull(),
   toplamTutar: decimal("toplam_tutar").notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// Projeler tablosu
+export const projeler = pgTable("projeler", {
+  id: serial("id").primaryKey(),
+  cariHesapId: integer("cari_hesap_id").notNull(),
+  teklifId: integer("teklif_id"),
+  projeNo: text("proje_no").notNull(),
+  projeAdi: text("proje_adi").notNull(),
+  projeDurumu: text("proje_durumu").notNull(),
+  projeTarihi: timestamp("proje_tarihi").notNull(),
+  sonTeslimTarihi: timestamp("son_teslim_tarihi"),
+  butce: decimal("butce"),
+  harcananTutar: decimal("harcanan_tutar"),
+  tamamlanmaOrani: integer("tamamlanma_orani"),
+  sorumluKisi: text("sorumlu_kisi"),
+  aciklama: text("aciklama"),
+  notlar: text("notlar"),
+  dosyalar: text("dosyalar").array(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
-// Yapılacaklar/Görevler tablosu
+// Görevler tablosu
 export const gorevler = pgTable("gorevler", {
   id: serial("id").primaryKey(),
   projeId: integer("proje_id"),
-  cariHesapId: integer("cari_hesap_id"),
+  cariHesapId: integer("cari_hesap_id").notNull(),
   baslik: text("baslik").notNull(),
   aciklama: text("aciklama"),
   baslangicTarihi: timestamp("baslangic_tarihi").notNull(),
   bitisTarihi: timestamp("bitis_tarihi"),
+  sonTeslimTarihi: timestamp("son_teslim_tarihi"),
   durum: text("durum").notNull(),
   oncelik: text("oncelik").notNull(),
   atananKisi: text("atanan_kisi"),
+  userId: integer("user_id"),
+  siralama: integer("siralama"),
+  etiketler: text("etiketler").array(),
+  dosyalar: text("dosyalar").array(),
   notlar: text("notlar"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
-// Insert ve Update schemaları
-export const insertUserSchema = createInsertSchema(users);
-export const selectUserSchema = createSelectSchema(users);
+// Zod şemaları
+export const insertUserSchema = z.object({
+  username: z.string().min(3, { message: "Kullanıcı adı en az 3 karakter olmalıdır" }),
+  password: z.string().min(6, { message: "Şifre en az 6 karakter olmalıdır" }),
+  name: z.string().min(2, { message: "Ad Soyad en az 2 karakter olmalıdır" }),
+  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz" }),
+  phone: z.string().optional(),
+  position: z.string().optional(),
+});
 
-export const insertCariHesapSchema = createInsertSchema(cariHesaplar);
-export type InsertCariHesap = Omit<CariHesap, 'id' | 'createdAt' | 'updatedAt'>;
+export const insertCariHesapSchema = z.object({
+  firmaAdi: z.string().min(1, "Firma adı zorunludur"),
+  firmaTuru: z.string().min(1, "Firma türü zorunludur"),
+  subeBolge: z.string().optional(),
+  vergiDairesi: z.string().optional(),
+  vergiNo: z.string().optional(),
+  adres: z.string().optional(),
+  telefon: z.string().optional(),
+  email: z.string().email("Geçerli bir email adresi giriniz").optional(),
+  notlar: z.string().optional(),
+  isActive: z.boolean().default(true)
+});
 
 export const insertYetkiliKisiSchema = z.object({
   cariHesapId: z.number(),
-  adSoyad: z.string(),
-  gorevi: z.string().nullable(),
-  departman: z.string().nullable(),
-  telefon: z.string().nullable(),
-  email: z.string().nullable(),
-  notlar: z.string().nullable()
+  adSoyad: z.string().min(1, "Ad Soyad zorunludur"),
+  gorevi: z.string().optional(),
+  departman: z.string().optional(),
+  telefon: z.string().optional(),
+  email: z.string().email("Geçerli bir email adresi giriniz").optional(),
+  notlar: z.string().optional()
 });
 
-export type InsertYetkiliKisi = z.infer<typeof insertYetkiliKisiSchema>;
+// Tip tanımları
+export type User = {
+  id: number;
+  username: string;
+  password: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  position: string | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
 
-export const insertCariHareketSchema = z.object({
-  cariHesapId: z.number(),
-  tur: z.string(),
-  tutar: z.string(),
-  bakiye: z.string(),
-  aciklama: z.string().nullable(),
-  projeId: z.number().nullable(),
-  tarih: z.date().optional().default(() => new Date())
-});
-
-export type InsertCariHareket = z.infer<typeof insertCariHareketSchema>;
-
-export const insertTeklifSchema = createInsertSchema(teklifler);
-export type InsertTeklif = Omit<Teklif, 'id' | 'createdAt' | 'updatedAt'>;
-
-export const insertTeklifKalemiSchema = createInsertSchema(teklifKalemleri);
-export type InsertTeklifKalemi = Omit<TeklifKalemi, 'id' | 'createdAt'>;
-
-export const insertProjeSchema = z.object({
-  cariHesapId: z.number(),
-  teklifId: z.number().optional(),
-  projeNo: z.string(),
-  projeAdi: z.string(),
-  projeDurumu: z.string(),
-  projeTarihi: z.string().transform(str => new Date(str)),
-  sonTeslimTarihi: z.string().optional().transform(str => str ? new Date(str) : null),
-  butce: z.string().optional(),
-  harcananTutar: z.string().optional(),
-  tamamlanmaOrani: z.number().optional(),
-  sorumluKisi: z.string().optional(),
-  aciklama: z.string().optional(),
-  notlar: z.string().optional(),
-  dosyalar: z.array(z.string()).optional()
-});
-
-export type InsertProje = z.infer<typeof insertProjeSchema>;
-
-export const insertGorevSchema = z.object({
-  projeId: z.number().optional(),
-  cariHesapId: z.number(),
-  baslik: z.string(),
-  aciklama: z.string().optional(),
-  baslangicTarihi: z.string().transform(str => new Date(str)),
-  bitisTarihi: z.string().optional().transform(str => str ? new Date(str) : null),
-  sonTeslimTarihi: z.string().optional().transform(str => str ? new Date(str) : null),
-  durum: z.string(),
-  oncelik: z.string(),
-  atananKisi: z.string().optional(),
-  siralama: z.number().optional(),
-  etiketler: z.array(z.string()).optional(),
-  dosyalar: z.array(z.string()).optional(),
-  notlar: z.string().optional(),
-  userId: z.number().nullable().default(null)
-});
-
-export type InsertGorev = z.infer<typeof insertGorevSchema>;
-
-// Temel tipler
 export type CariHesap = {
   id: number;
   firmaAdi: string;
@@ -205,8 +196,8 @@ export type CariHesap = {
   email: string | null;
   notlar: string | null;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 };
 
 export type YetkiliKisi = {
@@ -218,10 +209,21 @@ export type YetkiliKisi = {
   telefon: string | null;
   email: string | null;
   notlar: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 };
 
+// Insert tipleri
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertCariHesap = z.infer<typeof insertCariHesapSchema>;
+export type InsertYetkiliKisi = z.infer<typeof insertYetkiliKisiSchema>;
+export type InsertCariHareket = z.infer<typeof insertCariHareketSchema>;
+export type InsertTeklif = z.infer<typeof insertTeklifSchema>;
+export type InsertTeklifKalemi = z.infer<typeof insertTeklifKalemiSchema>;
+export type InsertProje = z.infer<typeof insertProjeSchema>;
+export type InsertGorev = z.infer<typeof insertGorevSchema>;
+
+// Temel tipler
 export type CariHareket = {
   id: number;
   cariHesapId: number;
@@ -230,9 +232,9 @@ export type CariHareket = {
   bakiye: string;
   aciklama: string | null;
   projeId: number | null;
-  tarih: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  tarih: Date | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 };
 
 export type Teklif = {
@@ -305,9 +307,82 @@ export type Gorev = {
   siralama: number | null;
   etiketler: string[] | null;
   dosyalar: string[] | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 };
+
+export const insertCariHareketSchema = z.object({
+  cariHesapId: z.number(),
+  tur: z.string(),
+  tutar: z.string(),
+  bakiye: z.string(),
+  aciklama: z.string().optional(),
+  projeId: z.number().optional(),
+  tarih: z.date().optional()
+});
+
+export const insertTeklifSchema = z.object({
+  cariHesapId: z.number(),
+  yetkiliKisiId: z.number().optional(),
+  teklifNo: z.string(),
+  teklifTuru: z.string(),
+  teklifKonusu: z.string(),
+  teklifDurumu: z.string(),
+  odemeSekli: z.string().optional(),
+  gecerlilikSuresi: z.string().optional(),
+  paraBirimi: z.string().optional(),
+  toplamTutar: z.string(),
+  notlar: z.string().optional(),
+  dosyalar: z.array(z.string()).optional()
+});
+
+export const insertTeklifKalemiSchema = z.object({
+  teklifId: z.number(),
+  urunHizmetAdi: z.string(),
+  miktar: z.string(),
+  birim: z.string(),
+  birimFiyat: z.string(),
+  tutar: z.string(),
+  iskontoTutari: z.string().optional(),
+  netTutar: z.string(),
+  kdvOrani: z.string(),
+  toplamTutar: z.string()
+});
+
+export const insertProjeSchema = z.object({
+  cariHesapId: z.number(),
+  teklifId: z.number().optional(),
+  projeNo: z.string(),
+  projeAdi: z.string(),
+  projeDurumu: z.string(),
+  projeTarihi: z.date(),
+  sonTeslimTarihi: z.date().nullable(),
+  butce: z.string().optional(),
+  harcananTutar: z.string().optional(),
+  tamamlanmaOrani: z.number().optional(),
+  sorumluKisi: z.string().optional(),
+  aciklama: z.string().optional(),
+  notlar: z.string().optional(),
+  dosyalar: z.array(z.string()).optional()
+});
+
+export const insertGorevSchema = z.object({
+  projeId: z.number().optional(),
+  cariHesapId: z.number(),
+  baslik: z.string(),
+  aciklama: z.string().optional(),
+  baslangicTarihi: z.date(),
+  bitisTarihi: z.date().optional(),
+  sonTeslimTarihi: z.date().optional(),
+  durum: z.string(),
+  oncelik: z.string(),
+  atananKisi: z.string().optional(),
+  userId: z.number().optional(),
+  siralama: z.number().optional(),
+  etiketler: z.array(z.string()).optional(),
+  dosyalar: z.array(z.string()).optional(),
+  notlar: z.string().optional()
+});
 
 // Form şemaları
 export const cariHesapFormSchema = z.object({
@@ -499,7 +574,12 @@ export const userFormSchema = z.object({
   position: z.string().optional(),
 });
 
-// Tip tanımlamaları
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type SelectUser = z.infer<typeof selectUserSchema>;
-export type UserForm = z.infer<typeof userFormSchema>;
+export const yetkiliKisiFormSchema = z.object({
+  cariHesapId: z.number(),
+  adSoyad: z.string().min(1, "Ad Soyad zorunludur"),
+  gorevi: z.string().optional(),
+  departman: z.string().optional(),
+  telefon: z.string().optional(),
+  email: z.string().email("Geçerli bir email adresi giriniz").optional(),
+  notlar: z.string().optional()
+});

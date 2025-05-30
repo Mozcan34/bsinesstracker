@@ -1,14 +1,18 @@
 import { pgTable, text, serial, timestamp, varchar, numeric, boolean, integer, decimal } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Kullanıcılar tablosu
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  email: text("email").notNull(),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow()
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  password: text("password").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 100 }).notNull().unique(),
+  phone: varchar("phone", { length: 20 }),
+  position: varchar("position", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Cari Hesaplar tablosu
@@ -113,11 +117,8 @@ export const gorevler = pgTable("gorevler", {
 });
 
 // Insert ve Update schemaları
-export const insertUserSchema = createInsertSchema(users, {
-  // id: z.undefined(), // Otomatik artan alanlar için bu şekilde bırakılabilir veya tamamen çıkarılabilir.
-  // createdAt: z.undefined(),
-  // updatedAt: z.undefined(),
-});
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
 
 export const insertCariHesapSchema = createInsertSchema(cariHesaplar);
 export type InsertCariHesap = Omit<CariHesap, 'id' | 'createdAt' | 'updatedAt'>;
@@ -487,3 +488,18 @@ export const gorevSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date()
 });
+
+// Form şemaları
+export const userFormSchema = z.object({
+  username: z.string().min(3, { message: "Kullanıcı adı en az 3 karakter olmalıdır" }),
+  password: z.string().min(6, { message: "Şifre en az 6 karakter olmalıdır" }),
+  name: z.string().min(2, { message: "Ad Soyad en az 2 karakter olmalıdır" }),
+  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz" }),
+  phone: z.string().optional(),
+  position: z.string().optional(),
+});
+
+// Tip tanımlamaları
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type SelectUser = z.infer<typeof selectUserSchema>;
+export type UserForm = z.infer<typeof userFormSchema>;

@@ -1,9 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// API base URL'i
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://turkish-job-connect2-o5xzcbpba-muhammetozcan34s-projects.vercel.app'
-  : 'http://localhost:3000';
+// API isteği için temel URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -18,25 +16,67 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// QueryClient örneği oluştur
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 dakika
+    },
+  },
+});
+
+// API isteği gönderme fonksiyonu
 export async function apiRequest(
   method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
-  
-  const res = await fetch(fullUrl, {
-    method,
-    headers: {
-      ...(data ? { "Content-Type": "application/json" } : {}),
-      "Accept": "application/json"
-    },
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  endpoint: string,
+  data?: unknown,
+  customHeaders?: Record<string, string>
+) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers = {
+    "Content-Type": "application/json",
+    ...customHeaders,
+  };
 
-  await throwIfResNotOk(res);
-  return res;
+  const config: RequestInit = {
+    method,
+    headers,
+    credentials: "include",
+  };
+
+  if (data) {
+    config.body = JSON.stringify(data);
+  }
+
+  try {
+    const response = await fetch(url, config);
+    await throwIfResNotOk(response);
+    return response;
+  } catch (error) {
+    console.error("API isteği başarısız:", error);
+    throw error;
+  }
+}
+
+// Kimlik doğrulama fonksiyonları
+export async function login(username: string, password: string) {
+  const response = await apiRequest("POST", "/api/auth/login", { username, password });
+  const user = await response.json();
+  return user;
+}
+
+export async function register(userData: {
+  username: string;
+  password: string;
+  name: string;
+  email: string;
+  phone?: string;
+  position?: string;
+}) {
+  const response = await apiRequest("POST", "/api/users", userData);
+  const user = await response.json();
+  return user;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -62,18 +102,3 @@ export const getQueryFn: <T>(options: {
     await throwIfResNotOk(res);
     return await res.json();
   };
-
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
-    },
-    mutations: {
-      retry: false,
-    },
-  },
-});

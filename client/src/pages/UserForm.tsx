@@ -1,6 +1,7 @@
+import React from "react";
 import { useLocation } from "wouter";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { register } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -23,10 +24,20 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
+// Field tipi tanımı
+type FieldProps = {
+  field: {
+    value: string;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onBlur: () => void;
+    name: string;
+    ref: React.Ref<HTMLInputElement>;
+  };
+};
+
 export default function UserForm() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -41,26 +52,12 @@ export default function UserForm() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: UserFormValues) => {
-      const response = await apiRequest("POST", "/api/users", data);
-      if (!response.ok) {
-        let errorMessage = "Kullanıcı oluşturulamadı";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = (await response.text()) || "Bilinmeyen sunucu hatası";
-        }
-        throw new Error(errorMessage);
-      }
-      return response.json();
-    },
+    mutationFn: register,
     onSuccess: () => {
       toast({
         title: "Kullanıcı Oluşturuldu",
         description: "Yeni kullanıcı başarıyla eklendi.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       navigate("/users");
     },
     onError: (error: Error) => {
@@ -198,12 +195,12 @@ export default function UserForm() {
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? (
-                    <span className="inline-flex items-center">
+                    <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Oluşturuluyor...
-                    </span>
+                      Kaydediliyor...
+                    </>
                   ) : (
-                    <span>Oluştur</span>
+                    "Kaydet"
                   )}
                 </Button>
               </div>

@@ -1,6 +1,6 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import type { Express, Request, Response } from "express";
+import { createServer, type Server } from "node:http";
+import { storage } from "./storage.js";
 import {
   insertCariHesapSchema,
   insertYetkiliKisiSchema,
@@ -19,9 +19,8 @@ import {
   InsertGorev,
   InsertYetkiliKisi,
   InsertCariHareket
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { z } from "zod";
-import { Request, Response } from 'express';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   

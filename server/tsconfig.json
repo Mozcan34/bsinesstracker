@@ -1,15 +1,18 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "outDir": "dist",
-    "noEmit": false,
-    "esModuleInterop": true,
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
-    "types": ["node", "express"]
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["../shared/*"]
+    }
   },
-  "include": ["./**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
 } 

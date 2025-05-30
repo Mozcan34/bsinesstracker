@@ -1,11 +1,12 @@
 import express from "express";
+import type { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { serveStatic } from "./vite";
+import { serveStatic } from "./vite.js";
 
-const __dirname = process.cwd();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
@@ -68,7 +69,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({
     error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message

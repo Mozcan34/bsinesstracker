@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { 
   ArrowLeft, 
   Save, 
@@ -22,6 +22,30 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+
+// API Response Types
+interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  priority: "low" | "medium" | "high";
+  status: "todo" | "in-progress" | "completed";
+  dueDate: string | null;
+  accountId: number | null;
+  projectId: number | null;
+  assigneeId: number | null;
+}
+
+interface Account {
+  id: number;
+  name: string;
+}
+
+interface Project {
+  id: number;
+  name: string;
+  accountId: number;
+}
 
 const taskFormSchema = z.object({
   title: z.string().min(2, {
@@ -55,22 +79,22 @@ export default function TaskForm() {
   
   const isEditing = Boolean(id);
   
-  const { data: task, isLoading: isLoadingTask } = useQuery({
+  const { data: task, isLoading: isLoadingTask } = useQuery<Task>({
     queryKey: [`/api/tasks/${id}`],
     enabled: isEditing,
   });
   
-  const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
+  const { data: accounts, isLoading: isLoadingAccounts } = useQuery<Account[]>({
     queryKey: ["/api/accounts"],
   });
   
-  const { data: projects, isLoading: isLoadingProjects } = useQuery({
+  const { data: projects, isLoading: isLoadingProjects } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
   });
   
   // Filter projects by selected account
   const [selectedAccountId, setSelectedAccountId] = useState<string>(accountIdFromUrl || "");
-  const filteredProjects = projects?.filter((project: any) => 
+  const filteredProjects = projects?.filter((project) => 
     !selectedAccountId || String(project.accountId) === selectedAccountId
   );
   
@@ -116,7 +140,7 @@ export default function TaskForm() {
   useEffect(() => {
     if (!isEditing) {
       if (projectIdFromUrl && projects) {
-        const selectedProject = projects.find((p: any) => String(p.id) === projectIdFromUrl);
+        const selectedProject = projects.find((p) => String(p.id) === projectIdFromUrl);
         if (selectedProject) {
           form.setValue("accountId", String(selectedProject.accountId));
           setSelectedAccountId(String(selectedProject.accountId));
@@ -212,6 +236,10 @@ export default function TaskForm() {
     }
   }
   
+  const handleDateSelect = (value: Date | undefined) => {
+    form.setValue("dueDate", value || null);
+  };
+  
   if ((isEditing && isLoadingTask) || isLoadingAccounts || isLoadingProjects) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -303,7 +331,7 @@ export default function TaskForm() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="_none">-- Firma Seçmeyin --</SelectItem>
-                          {accounts?.map((account: any) => (
+                          {accounts?.map((account) => (
                             <SelectItem key={account.id} value={String(account.id)}>
                               {account.name}
                             </SelectItem>
@@ -340,7 +368,7 @@ export default function TaskForm() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="_none">-- Proje Seçmeyin --</SelectItem>
-                          {filteredProjects?.map((project: any) => (
+                          {filteredProjects?.map((project) => (
                             <SelectItem key={project.id} value={String(project.id)}>
                               {project.name}
                             </SelectItem>
@@ -432,7 +460,7 @@ export default function TaskForm() {
                           <Calendar
                             mode="single"
                             selected={field.value || undefined}
-                            onSelect={field.onChange}
+                            onSelect={handleDateSelect}
                             initialFocus
                           />
                         </PopoverContent>

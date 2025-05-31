@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -59,13 +59,22 @@ const notificationSettingsSchema = z.object({
 
 type NotificationSettingsValues = z.infer<typeof notificationSettingsSchema>;
 
+// API Response Types
+interface ProfileData {
+  name: string;
+  email: string;
+  phone: string | null;
+  position: string | null;
+  companyName: string | null;
+}
+
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
   
   // Get profile data
-  const { data: profileData, isLoading: isLoadingProfile } = useQuery({
+  const { data: profileData, isLoading: isLoadingProfile } = useQuery<ProfileData>({
     queryKey: ["/api/profile"],
   });
   
@@ -82,7 +91,7 @@ export default function Settings() {
   });
   
   // Set profile form values when data is loaded
-  useState(() => {
+  useEffect(() => {
     if (profileData) {
       profileForm.reset({
         name: profileData.name,
@@ -92,7 +101,7 @@ export default function Settings() {
         companyName: profileData.companyName || "",
       });
     }
-  });
+  }, [profileData, profileForm]);
   
   // Company form
   const companyForm = useForm<CompanyFormValues>({

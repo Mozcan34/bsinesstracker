@@ -11,20 +11,62 @@ import { tr } from "date-fns/locale";
 // Colors for charts
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
 
+// API Response Types
+interface FinancialData {
+  total_income: number;
+  total_expense: number;
+  recent_income: number;
+  recent_expense: number;
+  monthly_income: number[];
+  monthly_expense: number[];
+}
+
+interface ProjectsData {
+  total_count: number;
+  month_count: number;
+  status_counts: {
+    active: number;
+    completed: number;
+    on_hold: number;
+    cancelled: number;
+  };
+  total_value: number;
+  approved_value: number;
+  pending_value: number;
+  average_value: number;
+}
+
+interface QuotesData {
+  total_count: number;
+  month_count: number;
+  status_counts: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    cancelled: number;
+  };
+}
+
+interface ChartDataItem {
+  name: string;
+  value: number;
+  percent?: number;
+}
+
 export default function Reports() {
   const [reportType, setReportType] = useState("financial");
   
-  const { data: financialData, isLoading: isLoadingFinancial } = useQuery({
+  const { data: financialData, isLoading: isLoadingFinancial } = useQuery<FinancialData>({
     queryKey: ["/api/reports/financial"],
     enabled: reportType === "financial",
   });
   
-  const { data: projectsData, isLoading: isLoadingProjects } = useQuery({
+  const { data: projectsData, isLoading: isLoadingProjects } = useQuery<ProjectsData>({
     queryKey: ["/api/reports/projects"],
     enabled: reportType === "projects",
   });
   
-  const { data: quotesData, isLoading: isLoadingQuotes } = useQuery({
+  const { data: quotesData, isLoading: isLoadingQuotes } = useQuery<QuotesData>({
     queryKey: ["/api/reports/quotes"],
     enabled: reportType === "quotes",
   });
@@ -55,27 +97,31 @@ export default function Reports() {
   };
   
   // Format project status data for pie chart
-  const getProjectStatusData = () => {
-    if (!projectsData || !projectsData.status_counts) return [];
+  const getProjectStatusData = (): ChartDataItem[] => {
+    if (!projectsData?.status_counts) return [];
     
     return [
-      { name: "Aktif", value: projectsData.status_counts?.active || 0 },
-      { name: "Tamamlandı", value: projectsData.status_counts?.completed || 0 },
-      { name: "Beklemede", value: projectsData.status_counts?.on_hold || 0 },
-      { name: "İptal", value: projectsData.status_counts?.cancelled || 0 },
+      { name: "Aktif", value: projectsData.status_counts.active || 0 },
+      { name: "Tamamlandı", value: projectsData.status_counts.completed || 0 },
+      { name: "Beklemede", value: projectsData.status_counts.on_hold || 0 },
+      { name: "İptal", value: projectsData.status_counts.cancelled || 0 },
     ].filter(item => item.value > 0);
   };
   
   // Format quote status data for pie chart
-  const getQuoteStatusData = () => {
-    if (!quotesData || !quotesData.status_counts) return [];
+  const getQuoteStatusData = (): ChartDataItem[] => {
+    if (!quotesData?.status_counts) return [];
     
     return [
-      { name: "Beklemede", value: quotesData.status_counts?.pending || 0 },
-      { name: "Onaylandı", value: quotesData.status_counts?.approved || 0 },
-      { name: "Reddedildi", value: quotesData.status_counts?.rejected || 0 },
-      { name: "İptal", value: quotesData.status_counts?.cancelled || 0 },
+      { name: "Beklemede", value: quotesData.status_counts.pending || 0 },
+      { name: "Onaylandı", value: quotesData.status_counts.approved || 0 },
+      { name: "Reddedildi", value: quotesData.status_counts.rejected || 0 },
+      { name: "İptal", value: quotesData.status_counts.cancelled || 0 },
     ].filter(item => item.value > 0);
+  };
+  
+  const formatTooltipValue = (value: number): string => {
+    return formatCurrency(value, "TRY");
   };
   
   return (
@@ -186,7 +232,7 @@ export default function Reports() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
-                      <Tooltip formatter={(value) => formatCurrency(value as number, "TRY")} />
+                      <Tooltip formatter={formatTooltipValue} />
                       <Legend />
                       <Bar dataKey="Gelir" fill="#8884d8" />
                       <Bar dataKey="Gider" fill="#82ca9d" />

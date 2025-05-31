@@ -151,7 +151,7 @@ export default function Teklifler() {
     resolver: zodResolver(teklifFormSchema),
     defaultValues: {
       teklifTuru: 'Verilen',
-      teklifDurumu: 'Beklemde',
+      teklifDurumu: 'Beklemede',
       paraBirimi: '₺',
       kalemler: [
         {
@@ -325,6 +325,11 @@ export default function Teklifler() {
 
   const getTurBadgeVariant = (tur: string) => {
     return tur === 'Verilen' ? 'default' : 'secondary';
+  };
+
+  const handleValueChange = (value: string | number, field: string, index: number) => {
+    form.setValue(`kalemler.${index}.${field}`, value as never);
+    calculateKalemTotals(index);
   };
 
   if (isLoading) {

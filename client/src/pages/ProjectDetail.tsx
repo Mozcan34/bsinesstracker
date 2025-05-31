@@ -36,13 +36,40 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import KanbanBoard from "@/components/ui/kanban-board";
 
+interface ProjectWithDetails {
+  id: number;
+  status: string;
+  number: string;
+  name: string;
+  account?: {
+    name: string;
+  };
+  formattedStartDate: string;
+  formattedEndDate?: string;
+  amount?: number;
+  currency?: string;
+  description?: string;
+  notes?: string;
+  quoteId?: number;
+  accountId?: number;
+  tasks?: Array<{
+    id: number;
+    title: string;
+    status: string;
+    priority: string;
+    dueDate?: string;
+    description?: string;
+    assignee?: string;
+  }>;
+}
+
 export default function ProjectDetail() {
   const { id } = useParams();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const { data: project, isLoading } = useQuery({
+  const { data: project, isLoading } = useQuery<ProjectWithDetails>({
     queryKey: [`/api/projects/${id}`],
   });
   
@@ -172,7 +199,8 @@ export default function ProjectDetail() {
     );
   }
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string | undefined) => {
+    if (!status) return "";
     switch (status) {
       case "active":
         return "Aktif";
@@ -187,7 +215,8 @@ export default function ProjectDetail() {
     }
   };
   
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | undefined) => {
+    if (!status) return null;
     switch (status) {
       case "active":
         return <Clock className="h-4 w-4 mr-1" />;
@@ -202,7 +231,7 @@ export default function ProjectDetail() {
     }
   };
   
-  const { badgeClass, textClass } = getStatusClass(getStatusLabel(project?.status));
+  const { badgeClass, textClass } = getStatusClass(getStatusLabel(project?.status) || '');
 
   return (
     <div className="space-y-4 pb-20 md:pb-6">
@@ -216,7 +245,7 @@ export default function ProjectDetail() {
             <ArrowLeft className="h-4 w-4 mr-1" />
             <span>Geri</span>
           </Button>
-          <h2 className="text-2xl font-semibold">Proje: {project?.number}</h2>
+          <h2 className="text-2xl font-semibold">Proje: {project?.number || 'N/A'}</h2>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -265,7 +294,7 @@ export default function ProjectDetail() {
             <div className="md:w-2/3">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold mb-1">{project?.name}</h2>
+                  <h2 className="text-2xl font-bold mb-1">{project?.name || 'N/A'}</h2>
                   <div className="flex items-center">
                     {getStatusIcon(project?.status)}
                     <span className={textClass}>{getStatusLabel(project?.status)}</span>
@@ -300,11 +329,13 @@ export default function ProjectDetail() {
                   </div>
                 )}
                 
-                {project?.amount > 0 && (
+                {project?.amount && project.amount > 0 && (
                   <div>
                     <p className="text-sm text-muted-foreground">Tutar</p>
                     <div className="flex items-start mt-1">
-                      <p className="font-medium">{formatCurrency(project.amount, project.currency)}</p>
+                      <p className="font-medium">
+                        {formatCurrency(project.amount, project.currency || 'TRY')}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -417,9 +448,9 @@ export default function ProjectDetail() {
                     {project?.tasks?.length || 0} Görev
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {project?.tasks?.filter((t: any) => t.status === "completed").length || 0} tamamlandı, 
-                    {project?.tasks?.filter((t: any) => t.status === "in-progress").length || 0} devam ediyor, 
-                    {project?.tasks?.filter((t: any) => t.status === "todo").length || 0} beklemede
+                    {project?.tasks?.filter(t => t.status === "completed").length || 0} tamamlandı, 
+                    {project?.tasks?.filter(t => t.status === "in-progress").length || 0} devam ediyor, 
+                    {project?.tasks?.filter(t => t.status === "todo").length || 0} beklemede
                   </p>
                   
                   <div className="mt-4">
@@ -443,14 +474,14 @@ export default function ProjectDetail() {
         <CardContent className="p-4">
           <h3 className="text-lg font-medium mb-4">Proje Görevleri</h3>
           
-          {project?.tasks?.length > 0 ? (
+          {project?.tasks && project.tasks.length > 0 ? (
             <KanbanBoard 
-              tasks={project.tasks.map((task: any) => ({
+              tasks={project.tasks.map((task) => ({
                 id: task.id,
                 title: task.title,
-                description: task.description,
+                description: task.description || '',
                 priority: task.priority,
-                dueDate: task.formattedDueDate,
+                dueDate: task.dueDate,
                 assignee: task.assignee,
                 status: task.status,
               }))}

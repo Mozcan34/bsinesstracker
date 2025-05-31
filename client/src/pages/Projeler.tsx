@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Eye } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -11,20 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Plus, 
   Search, 
   Filter, 
   MoreVertical, 
-  Eye, 
   Edit, 
   Trash,
   Calendar,
@@ -32,8 +28,6 @@ import {
   TrendingUp,
   Clock
 } from "lucide-react";
-import { useState } from "react";
-import { useLocation } from "wouter";
 import type { Proje } from "@shared/schema";
 
 const durum_colors = {

@@ -27,6 +27,8 @@ import { useParams, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Proje } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const durum_colors = {
   "Devam Ediyor": "bg-blue-100 text-blue-800",

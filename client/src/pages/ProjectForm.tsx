@@ -16,6 +16,21 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { apiRequest } from "@/lib/queryClient";
+
+interface Account {
+  id: number;
+  name: string;
+}
+
+interface Quote {
+  id: number;
+  accountId: number;
+  subject: string;
+  totalAmount: number;
+  currency: string;
+  status: string;
+}
 
 const projectFormSchema = z.object({
   accountId: z.string().refine((val) => parseInt(val) > 0, {
@@ -53,16 +68,16 @@ export default function ProjectForm() {
 
   const isEditing = Boolean(id);
 
-  const { data: project, isLoading: isLoadingProject } = useQuery({
+  const { data: project, isLoading: isLoadingProject } = useQuery<ProjectFormValues>({
     queryKey: [`/api/projects/${id}`],
     enabled: isEditing,
   });
 
-  const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
+  const { data: accounts, isLoading: isLoadingAccounts } = useQuery<Account[]>({
     queryKey: ["/api/accounts"],
   });
 
-  const { data: quotes, isLoading: isLoadingQuotes } = useQuery({
+  const { data: quotes, isLoading: isLoadingQuotes } = useQuery<Quote[]>({
     queryKey: ["/api/quotes"],
   });
 

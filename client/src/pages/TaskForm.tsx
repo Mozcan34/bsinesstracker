@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { DayPicker } from "react-day-picker";
 
 // API Response Types
 interface Task {
@@ -236,8 +237,8 @@ export default function TaskForm() {
     }
   }
   
-  const handleDateSelect = (value: Date | null) => {
-    form.setValue("dueDate", value);
+  const handleDateSelect = (date: Date | undefined) => {
+    form.setValue("dueDate", date || null);
   };
   
   if ((isEditing && isLoadingTask) || isLoadingAccounts || isLoadingProjects) {
@@ -457,11 +458,12 @@ export default function TaskForm() {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
+                          <DayPicker
                             mode="single"
-                            selected={field.value || undefined}
+                            selected={field.value}
                             onSelect={handleDateSelect}
                             initialFocus
+                            required={false}
                           />
                         </PopoverContent>
                       </Popover>

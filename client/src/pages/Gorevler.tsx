@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Filter, Calendar, User, AlertCircle, CheckCircle2, Clock, Trash2, Edit } from 'lucide-react';
@@ -15,13 +14,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { gorevFormSchema, type GorevFormData, type Gorev, type CariHesap, type Proje } from '@shared/schema';
 import { toast } from '@/hooks/use-toast';
 
-const priorityColors = {
+type Priority = 'Düşük' | 'Orta' | 'Yüksek';
+type Status = 'Bekliyor' | 'Devam Ediyor' | 'Tamamlandı';
+
+const priorityColors: Record<Priority, string> = {
   'Düşük': 'bg-green-100 text-green-800',
   'Orta': 'bg-yellow-100 text-yellow-800',
   'Yüksek': 'bg-red-100 text-red-800'
 };
 
-const statusColors = {
+const statusColors: Record<Status, string> = {
   'Bekliyor': 'bg-gray-100 text-gray-800',
   'Devam Ediyor': 'bg-blue-100 text-blue-800',
   'Tamamlandı': 'bg-green-100 text-green-800'
@@ -31,7 +33,7 @@ const statusIcons = {
   'Bekliyor': Clock,
   'Devam Ediyor': AlertCircle,
   'Tamamlandı': CheckCircle2
-};
+} as const;
 
 interface GorevWithDetails extends Gorev {
   cariHesap?: { firmaAdi: string };

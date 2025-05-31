@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +15,9 @@ import { z } from 'zod';
 import { Plus, Search, Eye, Edit, Trash2, FileText, Calculator } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useLocation } from "wouter";
+import { formatCurrency } from "@/lib/utils";
+import { type Teklif } from "@shared/schema";
 
 // Form schema
 const teklifFormSchema = z.object({
@@ -39,41 +42,26 @@ const teklifFormSchema = z.object({
 
 type TeklifFormData = z.infer<typeof teklifFormSchema>;
 
-interface Teklif {
-  id: number;
-  teklifNo: string;
-  teklifTuru: string;
-  tarih: string;
-  cariHesapId: number;
-  yetkiliKisiId?: number;
-  teklifKonusu: string;
-  teklifDurumu: string;
-  odemeSekli?: string;
-  gecerlilikSuresi?: string;
-  paraBirimi: string;
-  toplamTutar?: number;
-  notlar?: string;
+interface TeklifWithDetails extends Teklif {
   cariHesap?: {
     firmaAdi: string;
-    firmaTuru: string;
   };
   yetkiliKisi?: {
-    adSoyad: string;
+    ad: string;
+    soyad: string;
   };
-  kalemler?: TeklifKalemi[];
-}
-
-interface TeklifKalemi {
-  id: number;
-  urunHizmetAdi: string;
-  miktar: number;
-  birim: string;
-  birimFiyat: number;
-  tutar: number;
-  iskontoTutari: number;
-  netTutar: number;
-  kdvOrani: number;
-  toplamTutar: number;
+  kalemler?: Array<{
+    id: number;
+    urunHizmetAdi: string;
+    miktar: number;
+    birim: string;
+    birimFiyat: number;
+    tutar: number;
+    iskontoTutari: number;
+    netTutar: number;
+    kdvOrani: number;
+    toplamTutar: number;
+  }>;
 }
 
 interface CariHesap {
@@ -97,27 +85,28 @@ interface YetkiliKisi {
 type KalemField = 'urunHizmetAdi' | 'miktar' | 'birim' | 'birimFiyat' | 'iskontoTutari' | 'kdvOrani';
 
 export default function Teklifler() {
+  const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTur, setSelectedTur] = useState<string>('');
-  const [selectedDurum, setSelectedDurum] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<TeklifWithDetails["teklifDurumu"] | "all">("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedTeklif, setSelectedTeklif] = useState<Teklif | null>(null);
+  const [selectedTeklif, setSelectedTeklif] = useState<TeklifWithDetails | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [editingTeklif, setEditingTeklif] = useState<Teklif | null>(null);
+  const [editingTeklif, setEditingTeklif] = useState<TeklifWithDetails | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Teklifler listesi
   const { data: teklifler = [], isLoading } = useQuery({
-    queryKey: ['teklifler', searchTerm, selectedTur, selectedDurum],
+    queryKey: ['teklifler', searchTerm, selectedTur, statusFilter],
     queryFn: async () => {
       let url = '/api/teklifler';
       const params = new URLSearchParams();
       
       if (searchTerm) params.append('search', searchTerm);
       if (selectedTur) params.append('tur', selectedTur);
-      if (selectedDurum) params.append('durum', selectedDurum);
+      if (statusFilter !== "all") params.append('durum', statusFilter);
       
       if (params.toString()) {
         url += `?${params.toString()}`;
@@ -238,7 +227,7 @@ export default function Teklifler() {
     form.reset();
   };
 
-  const handleEdit = (teklif: Teklif) => {
+  const handleEdit = (teklif: TeklifWithDetails) => {
     setEditingTeklif(teklif);
     
     // Form verilerini doldur
@@ -265,7 +254,7 @@ export default function Teklifler() {
     setIsFormOpen(true);
   };
 
-  const handleViewDetail = (teklif: Teklif) => {
+  const handleViewDetail = (teklif: TeklifWithDetails) => {
     setSelectedTeklif(teklif);
     setIsDetailOpen(true);
   };
@@ -330,10 +319,8 @@ export default function Teklifler() {
     return tur === 'Verilen' ? 'default' : 'secondary';
   };
 
-  const handleValueChange = (value: string | number, field: KalemField, index: number) => {
-    const path = `kalemler.${index}.${field}`;
-    form.setValue(path, value);
-    calculateKalemTotals(index);
+  const handleValueChange = (value: string) => {
+    setStatusFilter(value as TeklifWithDetails["teklifDurumu"] | "all");
   };
 
   if (isLoading) {
@@ -383,14 +370,14 @@ export default function Teklifler() {
               </SelectContent>
             </Select>
             <Select 
-              value={selectedDurum}
-              onValueChange={(value: string) => setSelectedDurum(value)}
+              value={statusFilter}
+              onValueChange={handleValueChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Durum" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tüm Durumlar</SelectItem>
+                <SelectItem value="all">Tüm Durumlar</SelectItem>
                 <SelectItem value="Beklemede">Beklemede</SelectItem>
                 <SelectItem value="Onaylandı">Onaylandı</SelectItem>
                 <SelectItem value="Kaybedildi">Kaybedildi</SelectItem>
@@ -402,7 +389,7 @@ export default function Teklifler() {
               onClick={() => {
                 setSearchTerm('');
                 setSelectedTur('');
-                setSelectedDurum('');
+                setStatusFilter('all');
               }}
             >
               Temizle
@@ -428,7 +415,7 @@ export default function Teklifler() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {teklifler.map((teklif: Teklif) => (
+              {teklifler.map((teklif: TeklifWithDetails) => (
                 <TableRow key={teklif.id}>
                   <TableCell className="font-medium">{teklif.teklifNo}</TableCell>
                   <TableCell>
@@ -797,12 +784,10 @@ export default function Teklifler() {
                   <Label className="font-semibold">Cari Hesap</Label>
                   <p>{selectedTeklif.cariHesap?.firmaAdi}</p>
                 </div>
-                {selectedTeklif.yetkiliKisi && (
-                  <div>
-                    <Label className="font-semibold">Yetkili Kişi</Label>
-                    <p>{selectedTeklif.yetkiliKisi.adSoyad}</p>
-                  </div>
-                )}
+                <div>
+                  <Label className="font-semibold">Yetkili Kişi</Label>
+                  <p>{selectedTeklif.yetkiliKisi ? `${selectedTeklif.yetkiliKisi.ad} ${selectedTeklif.yetkiliKisi.soyad}` : '-'}</p>
+                </div>
               </div>
 
               {/* Teklif Kalemleri */}

@@ -22,14 +22,47 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Plus, Filter, MoreHorizontal, Pencil, Trash, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
+interface TaskFilter {
+  filter: string;
+  status?: string;
+  priority?: string;
+  accountId?: string;
+  projectId?: string;
+}
+
 export default function Tasks() {
   const [, navigate] = useLocation();
   const search = useSearch();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedPriority, setSelectedPriority] = useState("");
+  const [selectedAccount, setSelectedAccount] = useState("");
+  const [selectedProject, setSelectedProject] = useState("");
+  
+  const searchParams = new URLSearchParams({
+    filter: searchTerm,
+    status: selectedStatus,
+    priority: selectedPriority,
+    accountId: selectedAccount,
+    projectId: selectedProject
+  });
 
-  const { data: tasks, isLoading } = useQuery({
-    queryKey: ["/api/tasks"],
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ['tasks', searchParams.toString()],
+    queryFn: async () => {
+      const filter: TaskFilter = {
+        filter: searchTerm,
+        status: selectedStatus || undefined,
+        priority: selectedPriority || undefined,
+        accountId: selectedAccount || undefined,
+        projectId: selectedProject || undefined
+      };
+      
+      const response = await fetch(`/api/tasks?${new URLSearchParams(filter as any).toString()}`);
+      if (!response.ok) throw new Error('Görevler yüklenemedi');
+      return response.json();
+    },
   });
 
   const urlSearchQuery = new URLSearchParams(search).get("q") || "";

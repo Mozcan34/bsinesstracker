@@ -328,7 +328,8 @@ export default function Teklifler() {
   };
 
   const handleValueChange = (value: string | number, field: string, index: number) => {
-    form.setValue(`kalemler.${index}.${field}`, value as never);
+    const path = `kalemler.${index}.${field}` as const;
+    form.setValue(path, value as never);
     calculateKalemTotals(index);
   };
 

@@ -176,7 +176,7 @@ export default function TaskForm() {
         ? `/projects/${form.getValues().projectId}` 
         : "/tasks");
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Hata",
         description: "Görev oluşturulurken bir hata oluştu.",
@@ -210,7 +210,7 @@ export default function TaskForm() {
         ? `/projects/${form.getValues().projectId}` 
         : "/tasks");
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Hata",
         description: "Görev güncellenirken bir hata oluştu.",
@@ -236,8 +236,8 @@ export default function TaskForm() {
     }
   }
   
-  const handleDateSelect = (value: Date | undefined) => {
-    form.setValue("dueDate", value || null);
+  const handleDateSelect = (value: Date | null) => {
+    form.setValue("dueDate", value);
   };
   
   if ((isEditing && isLoadingTask) || isLoadingAccounts || isLoadingProjects) {

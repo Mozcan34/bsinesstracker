@@ -19,6 +19,34 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
+// API Response Types
+interface Quote {
+  id: number;
+  type: "sent" | "received";
+  number: string;
+  accountId: number;
+  subject: string;
+  date: string;
+  validUntil: string | null;
+  contactPerson: string | null;
+  status: "pending" | "approved" | "rejected" | "cancelled";
+  paymentTerms: string | null;
+  notes: string | null;
+  currency: "TRY" | "USD" | "EUR";
+  totalAmount: number;
+  items: QuoteItem[];
+}
+
+interface QuoteItem {
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  discount?: number;
+  taxRate?: number;
+  lineTotal: number;
+}
+
 const quoteFormSchema = z.object({
   type: z.enum(["sent", "received"], {
     required_error: "Teklif türü seçilmelidir",

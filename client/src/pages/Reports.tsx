@@ -78,17 +78,17 @@ export default function Reports() {
   
   // Calculate monthly data for financial report
   const getMonthlyData = () => {
-    if (!financialData || !financialData.monthly_income || !financialData.monthly_expense) return [];
+    if (!financialData?.monthly_income || !financialData?.monthly_expense) return [];
     
     const monthlyData = [];
     const now = new Date();
     
     for (let i = 5; i >= 0; i--) {
       const date = subMonths(now, i);
-      const month = format(date, "MMM", { locale: tr });
+      const month = format(date, "MMM");
       
-      const income = (financialData.monthly_income && financialData.monthly_income[i]) || 0;
-      const expense = (financialData.monthly_expense && financialData.monthly_expense[i]) || 0;
+      const income = financialData.monthly_income[i] || 0;
+      const expense = financialData.monthly_expense[i] || 0;
       
       monthlyData.push({
         name: month,
@@ -494,12 +494,12 @@ export default function Reports() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent = 0 }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {getQuoteStatusData().map((entry, index) => (
+                          {getQuoteStatusData().map((_, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>

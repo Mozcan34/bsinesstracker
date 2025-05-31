@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, Search, Eye, Edit, Trash2, FileText, Calculator } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 // Form schema
 const teklifFormSchema = z.object({
@@ -92,6 +93,8 @@ interface YetkiliKisi {
   createdAt: Date;
   updatedAt: Date;
 }
+
+type KalemField = 'urunHizmetAdi' | 'miktar' | 'birim' | 'birimFiyat' | 'iskontoTutari' | 'kdvOrani';
 
 export default function Teklifler() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -327,9 +330,9 @@ export default function Teklifler() {
     return tur === 'Verilen' ? 'default' : 'secondary';
   };
 
-  const handleValueChange = (value: string | number, field: string, index: number) => {
-    const path = `kalemler.${index}.${field}` as const;
-    form.setValue(path, value as never);
+  const handleValueChange = (value: string | number, field: KalemField, index: number) => {
+    const path = `kalemler.${index}.${field}`;
+    form.setValue(path, value);
     calculateKalemTotals(index);
   };
 
@@ -366,7 +369,10 @@ export default function Teklifler() {
                 className="w-full"
               />
             </div>
-            <Select value={selectedTur} onValueChange={setSelectedTur}>
+            <Select 
+              value={selectedTur}
+              onValueChange={(value: string) => setSelectedTur(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Teklif Türü" />
               </SelectTrigger>
@@ -376,7 +382,10 @@ export default function Teklifler() {
                 <SelectItem value="Alınan">Alınan</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={selectedDurum} onValueChange={setSelectedDurum}>
+            <Select 
+              value={selectedDurum}
+              onValueChange={(value: string) => setSelectedDurum(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Durum" />
               </SelectTrigger>
@@ -493,42 +502,53 @@ export default function Teklifler() {
           <form onSubmit={form.handleSubmit((data) => teklifMutation.mutate(data))} className="space-y-6">
             {/* Temel Bilgiler */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="teklifTuru">Teklif Türü</Label>
-                <Select 
-                  value={form.watch('teklifTuru')} 
-                  onValueChange={(value: 'Verilen' | 'Alınan') => form.setValue('teklifTuru', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Verilen">Verilen Teklif</SelectItem>
-                    <SelectItem value="Alınan">Alınan Teklif</SelectItem>
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.teklifTuru && (
-                  <p className="text-sm text-red-500">{form.formState.errors.teklifTuru.message}</p>
+              <FormField
+                control={form.control}
+                name="teklifTuru"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teklif Türü</FormLabel>
+                    <Select 
+                      onValueChange={(value: string) => field.onChange(value as 'Verilen' | 'Alınan')}
+                      value={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Verilen">Verilen Teklif</SelectItem>
+                        <SelectItem value="Alınan">Alınan Teklif</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
 
-              <div>
-                <Label htmlFor="teklifDurumu">Durum</Label>
-                <Select 
-                  value={form.watch('teklifDurumu')} 
-                  onValueChange={(value: 'Beklemede' | 'Onaylandı' | 'Kaybedildi' | 'İptal') => form.setValue('teklifDurumu', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Beklemede">Beklemede</SelectItem>
-                    <SelectItem value="Onaylandı">Onaylandı</SelectItem>
-                    <SelectItem value="Kaybedildi">Kaybedildi</SelectItem>
-                    <SelectItem value="İptal">İptal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={form.control}
+                name="teklifDurumu"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Durum</FormLabel>
+                    <Select 
+                      onValueChange={(value: string) => field.onChange(value as 'Beklemede' | 'Onaylandı' | 'Kaybedildi' | 'İptal')}
+                      value={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Beklemede">Beklemede</SelectItem>
+                        <SelectItem value="Onaylandı">Onaylandı</SelectItem>
+                        <SelectItem value="Kaybedildi">Kaybedildi</SelectItem>
+                        <SelectItem value="İptal">İptal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div>
@@ -604,22 +624,29 @@ export default function Teklifler() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="paraBirimi">Para Birimi</Label>
-                <Select 
-                  value={form.watch('paraBirimi')} 
-                  onValueChange={(value) => form.setValue('paraBirimi', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="₺">TL (₺)</SelectItem>
-                    <SelectItem value="$">USD ($)</SelectItem>
-                    <SelectItem value="€">EUR (€)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={form.control}
+                name="paraBirimi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Para Birimi</FormLabel>
+                    <Select 
+                      onValueChange={(value: string) => field.onChange(value)}
+                      value={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="₺">TL (₺)</SelectItem>
+                        <SelectItem value="$">USD ($)</SelectItem>
+                        <SelectItem value="€">EURO (€)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Teklif Kalemleri */}
@@ -638,7 +665,7 @@ export default function Teklifler() {
                     <div className="md:col-span-2">
                       <Label>Ürün/Hizmet</Label>
                       <Input
-                        {...form.register(`kalemler.${index}.urunHizmetAdi`)}
+                        {...form.register(`kalemler.${index}.urunHizmetAdi`, { value: _ => _ as string })}
                         placeholder="Ürün/Hizmet adı"
                       />
                     </div>
@@ -655,7 +682,7 @@ export default function Teklifler() {
                     <div>
                       <Label>Birim</Label>
                       <Input
-                        {...form.register(`kalemler.${index}.birim`)}
+                        {...form.register(`kalemler.${index}.birim`, { value: _ => _ as string })}
                         placeholder="Adet"
                       />
                     </div>

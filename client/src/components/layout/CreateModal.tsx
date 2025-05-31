@@ -1,23 +1,25 @@
-import { useState } from "react";
+import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Building2, FileText, FolderKanban, CheckSquare } from "lucide-react";
+import { Plus, FileText, Users, Briefcase, Calculator } from "lucide-react";
 
 interface CreateModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
 }
 
-export default function CreateModal({ isOpen, onClose }: CreateModalProps) {
-  const createOptions = [
+export default function CreateModal({ open, onClose }: CreateModalProps) {
+  const [, navigate] = useLocation();
+
+  const items = [
     {
       title: "Yeni Cari Hesap",
       description: "Yeni müşteri veya tedarikçi ekleyin",
-      icon: Building2,
+      icon: Plus,
       color: "bg-blue-500",
       action: () => {
         onClose();
-        // Navigate to create form
+        navigate("/accounts/new");
       }
     },
     {
@@ -33,51 +35,56 @@ export default function CreateModal({ isOpen, onClose }: CreateModalProps) {
     {
       title: "Yeni Proje",
       description: "Yeni proje başlatın",
-      icon: FolderKanban,
+      icon: Users,
       color: "bg-purple-500",
       action: () => {
         onClose();
-        // Navigate to create form
+        navigate("/projects/new");
       }
     },
     {
       title: "Yeni Görev",
       description: "Yapılacak iş ekleyin",
-      icon: CheckSquare,
+      icon: Briefcase,
       color: "bg-orange-500",
       action: () => {
         onClose();
-        // Navigate to create form
+        navigate("/tasks/new");
+      }
+    },
+    {
+      title: "Yeni Hesap",
+      description: "Yeni hesap ekleyin",
+      icon: Calculator,
+      color: "bg-teal-500",
+      action: () => {
+        onClose();
+        navigate("/accounts/new");
       }
     }
   ];
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Yeni Oluştur</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-1 gap-4 py-4">
-          {createOptions.map((option) => {
-            const Icon = option.icon;
-            return (
-              <Button
-                key={option.title}
-                variant="outline"
-                className="flex items-center justify-start p-4 h-auto"
-                onClick={option.action}
-              >
-                <div className={`${option.color} p-2 rounded-lg mr-3`}>
-                  <Icon className="h-5 w-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">{option.title}</div>
-                  <div className="text-sm text-gray-500">{option.description}</div>
-                </div>
-              </Button>
-            );
-          })}
+        <div className="grid grid-cols-2 gap-4">
+          {items.map((item) => (
+            <Button
+              key={item.title}
+              variant="outline"
+              className="h-32 flex-col gap-2 hover:bg-accent"
+              onClick={item.action}
+            >
+              <item.icon className={`h-8 w-8 ${item.color} text-white rounded-lg p-1.5`} />
+              <div className="space-y-1 text-left">
+                <h3 className="font-medium leading-none">{item.title}</h3>
+                <p className="text-xs text-muted-foreground">{item.description}</p>
+              </div>
+            </Button>
+          ))}
         </div>
       </DialogContent>
     </Dialog>

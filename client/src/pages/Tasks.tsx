@@ -35,28 +35,16 @@ export default function Tasks() {
   const search = useSearch();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedPriority, setSelectedPriority] = useState("");
-  const [selectedAccount, setSelectedAccount] = useState("");
-  const [selectedProject, setSelectedProject] = useState("");
   
   const searchParams = new URLSearchParams({
-    filter: searchTerm,
-    status: selectedStatus,
-    priority: selectedPriority,
-    accountId: selectedAccount,
-    projectId: selectedProject
+    filter: searchTerm
   });
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks', searchParams.toString()],
     queryFn: async () => {
       const filter: TaskFilter = {
-        filter: searchTerm,
-        status: selectedStatus || undefined,
-        priority: selectedPriority || undefined,
-        accountId: selectedAccount || undefined,
-        projectId: selectedProject || undefined
+        filter: searchTerm
       };
       
       const response = await fetch(`/api/tasks?${new URLSearchParams(filter as any).toString()}`);
@@ -67,7 +55,7 @@ export default function Tasks() {
 
   const urlSearchQuery = new URLSearchParams(search).get("q") || "";
 
-  const filteredTasks = (tasks || []).filter((task: any) => {
+  const filteredTasks = tasks.filter((task: any) => {
     const term = searchTerm || urlSearchQuery;
     if (!term) return true;
     const searchLower = term.toLowerCase();

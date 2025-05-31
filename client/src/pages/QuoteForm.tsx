@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useLocation, useSearch } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -96,6 +96,11 @@ const units = [
   { value: "ml", label: "ml" },
   { value: "metre", label: "Metre" }
 ];
+
+// Select bileşenleri için tip tanımlamaları
+type QuoteType = "sent" | "received";
+type QuoteStatus = "pending" | "approved" | "rejected" | "cancelled";
+type QuoteCurrency = "TRY" | "USD" | "EUR";
 
 export default function QuoteForm() {
   const { id } = useParams();
@@ -312,14 +317,14 @@ export default function QuoteForm() {
                 control={form.control}
                 name="type"
                 render={({ field }) => (
-                  <FormItem className="space-y-0">
+                  <FormItem>
+                    <FormLabel>Teklif Türü</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
+                      onValueChange={(value: string) => field.onChange(value as QuoteType)}
                       value={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger>
                           <SelectValue placeholder="Teklif türü seçin" />
                         </SelectTrigger>
                       </FormControl>
@@ -328,6 +333,7 @@ export default function QuoteForm() {
                         <SelectItem value="received">Alınan Teklif</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -482,8 +488,7 @@ export default function QuoteForm() {
                     <FormItem>
                       <FormLabel>Para Birimi</FormLabel>
                       <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        onValueChange={(value: string) => field.onChange(value as QuoteCurrency)}
                         value={field.value}
                       >
                         <FormControl>
@@ -747,6 +752,32 @@ export default function QuoteForm() {
                         className="min-h-[100px]"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Durum</FormLabel>
+                    <Select 
+                      onValueChange={(value: string) => field.onChange(value as QuoteStatus)}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Durum seçin" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="pending">Beklemede</SelectItem>
+                        <SelectItem value="approved">Onaylandı</SelectItem>
+                        <SelectItem value="rejected">Reddedildi</SelectItem>
+                        <SelectItem value="cancelled">İptal</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

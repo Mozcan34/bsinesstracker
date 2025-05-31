@@ -1,6 +1,8 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Building2, FileText, FolderKanban, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BarChart3, CheckCircle, Home, Menu, Plus, Building, FileText, Briefcase, BarChart } from "lucide-react";
+import { BarChart3, CheckCircle, Home, Menu, Plus, Building, Briefcase, BarChart } from "lucide-react";
 
 interface MobileNavProps {
   onCreateClick: () => void;

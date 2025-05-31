@@ -1,38 +1,19 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useLocation, useSearch } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Plus, Save, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { ArrowLeft, Save, Loader2, Calendar, CalendarIcon } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
@@ -187,21 +168,17 @@ export default function ProjectForm() {
   });
 
   // Submit handler
-  function onSubmit(data: ProjectFormValues) {
-    // Format the data properly
-    const submissionData = {
-      ...data,
-      accountId: parseInt(data.accountId),
-      quoteId: data.quoteId ? parseInt(data.quoteId) : undefined,
-      amount: data.amount || 0,
-    };
-
-    if (isEditing) {
-      updateMutation.mutate(submissionData as any);
-    } else {
-      createMutation.mutate(submissionData as any);
+  const onSubmit = async (data: ProjectFormValues) => {
+    try {
+      if (isEditing) {
+        await updateMutation.mutateAsync(data);
+      } else {
+        await createMutation.mutateAsync(data);
+      }
+    } catch {
+      // Hata işleme zaten mutation'larda yapılıyor
     }
-  }
+  };
 
   // Filter quotes by selected account
   const selectedAccountId = form.watch("accountId");

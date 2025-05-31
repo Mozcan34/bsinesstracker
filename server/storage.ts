@@ -1,742 +1,688 @@
+import { eq, and, or, like, desc, sql } from "drizzle-orm";
+import { db } from "./db.js";
 import { 
-  type CariHesap, type YetkiliKisi, type CariHareket,
-  type Teklif, type TeklifKalemi, type Proje, type Gorev,
-  type InsertCariHesap, type InsertYetkiliKisi,
-  type InsertCariHareket, type InsertTeklif, type InsertTeklifKalemi,
-  type InsertProje, type InsertGorev,
-  cariHesaplar, yetkiliKisiler, cariHareketler, teklifler,
-  teklifKalemleri, projeler, gorevler
-} from '@shared/schema';
-import { eq } from 'drizzle-orm';
-import { db } from './db';
-
-// Helper function to remove undefined properties from an object
-function removeUndefinedProps<T extends Record<string, any>>(obj: T): T {
-  const newObj = { ...obj };
-  for (const key in newObj) {
-    if (newObj[key] === undefined) {
-      delete newObj[key];
-    }
-  }
-  return newObj;
-}
+  cariHesaplar,
+  yetkiliKisiler,
+  cariHareketler,
+  teklifler,
+  teklifKalemleri,
+  projeler,
+  gorevler,
+  type CariHesap,
+  type YetkiliKisi,
+  type CariHareket,
+  type Teklif,
+  type TeklifKalemi,
+  type Proje,
+  type Gorev,
+  type InsertCariHesap,
+  type InsertYetkiliKisi,
+  type InsertCariHareket,
+  type InsertTeklif,
+  type InsertTeklifKalemi,
+  type InsertProje,
+  type InsertGorev
+} from "@shared/schema";
 
 export interface IStorage {
-  // Cari Hesaplar
-  getAllCariHesaplar(): Promise<CariHesap[]>;
-  getCariHesapById(id: number): Promise<CariHesap | undefined>;
+  // Cari Hesap işlemleri
   createCariHesap(data: InsertCariHesap): Promise<CariHesap>;
-  updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | undefined>;
+  getAllCariHesaplar(): Promise<CariHesap[]>;
+  getCariHesapById(id: number): Promise<CariHesap | null>;
+  updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | null>;
   deleteCariHesap(id: number): Promise<boolean>;
   searchCariHesaplar(query: string): Promise<CariHesap[]>;
 
-  // Yetkili Kişiler
-  getYetkiliKisilerByCariId(cariHesapId: number): Promise<YetkiliKisi[]>;
+  // Yetkili Kişi işlemleri
   createYetkiliKisi(data: InsertYetkiliKisi): Promise<YetkiliKisi>;
-  updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined>;
+  getYetkiliKisilerByCariId(cariHesapId: number): Promise<YetkiliKisi[]>;
+  updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | null>;
   deleteYetkiliKisi(id: number): Promise<boolean>;
 
-  // Cari Hareketler
-  getCariHareketlerByCariId(cariHesapId: number, limit?: number): Promise<CariHareket[]>;
+  // Cari Hareket işlemleri
   createCariHareket(data: InsertCariHareket): Promise<CariHareket>;
+  getCariHareketlerByCariId(cariHesapId: number): Promise<CariHareket[]>;
+  updateCariHareket(id: number, data: Partial<InsertCariHareket>): Promise<CariHareket | null>;
+  deleteCariHareket(id: number): Promise<boolean>;
 
-  // Teklifler
-  getAllTeklifler(): Promise<Teklif[]>;
-  getTeklifById(id: number): Promise<Teklif | undefined>;
+  // Teklif işlemleri
   createTeklif(data: InsertTeklif): Promise<Teklif>;
-  updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | undefined>;
+  getAllTeklifler(): Promise<Teklif[]>;
+  getTeklifById(id: number): Promise<Teklif | null>;
+  updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | null>;
   deleteTeklif(id: number): Promise<boolean>;
-  getTekliflerByTur(tur: string): Promise<Teklif[]>;
   searchTeklifler(query: string): Promise<Teklif[]>;
+  getTekliflerByTur(tur: string): Promise<Teklif[]>;
 
-  // Teklif Kalemleri
-  getTeklifKalemleriByTeklifId(teklifId: number): Promise<TeklifKalemi[]>;
+  // Teklif Kalemi işlemleri
   createTeklifKalemi(data: InsertTeklifKalemi): Promise<TeklifKalemi>;
-  deleteTeklifKalemleriByTeklifId(teklifId: number): Promise<boolean>;
+  getAllTeklifKalemleri(): Promise<TeklifKalemi[]>;
+  getTeklifKalemiById(id: number): Promise<TeklifKalemi | null>;
+  updateTeklifKalemi(id: number, data: Partial<InsertTeklifKalemi>): Promise<TeklifKalemi | null>;
+  deleteTeklifKalemi(id: number): Promise<boolean>;
+  getTeklifKalemleriByTeklifId(teklifId: number): Promise<TeklifKalemi[]>;
 
-  // Projeler
-  getAllProjeler(): Promise<Proje[]>;
-  getProjeById(id: number): Promise<Proje | undefined>;
+  // Proje işlemleri
   createProje(data: InsertProje): Promise<Proje>;
-  updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | undefined>;
+  getAllProjeler(): Promise<Proje[]>;
+  getProjeById(id: number): Promise<Proje | null>;
+  updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | null>;
   deleteProje(id: number): Promise<boolean>;
-  getProjelerByDurum(durum: string): Promise<Proje[]>;
   searchProjeler(query: string): Promise<Proje[]>;
+  getProjelerByDurum(durum: string): Promise<Proje[]>;
 
-  // Görevler
-  getAllGorevler(): Promise<Gorev[]>;
-  getGorevById(id: number): Promise<Gorev | undefined>;
+  // Görev işlemleri
   createGorev(data: InsertGorev): Promise<Gorev>;
-  updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | undefined>;
+  getAllGorevler(): Promise<Gorev[]>;
+  getGorevById(id: number): Promise<Gorev | null>;
+  updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | null>;
   deleteGorev(id: number): Promise<boolean>;
-  getGorevlerByDurum(durum: string): Promise<Gorev[]>;
-  getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]>;
-  getGorevlerByProjeId(projeId: number): Promise<Gorev[]>;
   searchGorevler(query: string): Promise<Gorev[]>;
+  getGorevlerByDurum(durum: string): Promise<Gorev[]>;
+  getGorevlerByProjeId(projeId: number): Promise<Gorev[]>;
+  getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]>;
 
-  // Dashboard
-  getDashboardStats(period?: string): Promise<any>;
-  getRecentActivities(limit?: number): Promise<any>;
-  getUpcomingTasks(limit?: number): Promise<Gorev[]>;
+  // Dashboard işlemleri
+  getDashboardStats(period: string): Promise<any>;
+  getRecentActivities(limit: number): Promise<any>;
+  getUpcomingTasks(limit: number): Promise<any>;
+
+  // Yeni eklenen işlemler
+  deleteTeklifKalemleriByTeklifId(teklifId: number): Promise<boolean>;
 }
 
-// Geçici in-memory storage
-export class MemoryStorage implements IStorage {
-  private cariHesaplar: Map<number, CariHesap> = new Map();
-  private yetkiliKisiler: Map<number, YetkiliKisi> = new Map();
-  private cariHareketler: Map<number, CariHareket> = new Map();
-  private teklifler: Map<number, Teklif> = new Map();
-  private teklifKalemleri: Map<number, TeklifKalemi> = new Map();
-  private projeler: Map<number, Proje> = new Map();
-  private gorevler: Map<number, Gorev> = new Map();
-  private currentIds = {
-    cariHesap: 1,
-    yetkiliKisi: 1,
-    cariHareket: 1,
-    teklif: 1,
-    teklifKalemi: 1,
-    proje: 1,
-    gorev: 1
-  };
-
-  private getDbInstance() {
-    return db;
-  }
-
-  constructor() {
-    this.initSampleData();
-  }
-
-  private initSampleData() {
-    // Örnek cari hesap
-    const sampleCariHesap: CariHesap = {
-      id: 1,
-      firmaAdi: "ABC Teknoloji Ltd.",
-      subeBolge: "İstanbul",
-      firmaTuru: "Alıcı",
-      telefon: "0212 555 0001",
-      email: "info@abcteknoloji.com",
-      adres: "Beşiktaş, İstanbul",
-      vergiNo: "1234567890",
-      vergiDairesi: "Beşiktaş VD",
-      notlar: "Önemli müşteri",
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.cariHesaplar.set(1, sampleCariHesap);
-    this.currentIds.cariHesap = 2;
-
-    // Örnek görev
-    const sampleGorev: Gorev = {
-      id: 1,
-      baslik: "Website Tasarımı",
-      aciklama: "Kurumsal website tasarımı ve geliştirme",
-      durum: "Devam Ediyor",
-      oncelik: "Yüksek",
-      baslangicTarihi: new Date(),
-      bitisTarihi: null,
-      sonTeslimTarihi: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 gün sonra
-      atananKisi: "Ahmet Yılmaz",
-      cariHesapId: 1,
-      projeId: null,
-      userId: null,
-      siralama: 0,
-      etiketler: null,
-      dosyalar: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.gorevler.set(1, sampleGorev);
-    this.currentIds.gorev = 2;
-  }
-
-  // Cari Hesaplar CRUD
-  async getAllCariHesaplar(): Promise<CariHesap[]> {
-    return Array.from(this.cariHesaplar.values())
-      .filter(c => c.isActive)
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-  }
-
-  async getCariHesapById(id: number): Promise<CariHesap | undefined> {
-    return this.cariHesaplar.get(id);
-  }
-
+export class DatabaseStorage implements IStorage {
+  // Cari Hesap işlemleri
   async createCariHesap(data: InsertCariHesap): Promise<CariHesap> {
-    const id = this.currentIds.cariHesap++;
-    const now = new Date();
-    const cariHesap: CariHesap = {
-      id,
-      firmaAdi: data.firmaAdi,
-      firmaTuru: data.firmaTuru,
-      subeBolge: data.subeBolge || null,
-      telefon: data.telefon || null,
-      email: data.email || null,
-      adres: data.adres || null,
-      vergiNo: data.vergiNo || null,
-      vergiDairesi: data.vergiDairesi || null,
-      notlar: data.notlar || null,
-      isActive: true,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.cariHesaplar.set(id, cariHesap);
-    return cariHesap;
+    const [cariHesap] = await db.insert(cariHesaplar).values({
+      ...data,
+      isActive: data.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return {
+      ...cariHesap,
+      isActive: cariHesap.isActive ?? true,
+      createdAt: cariHesap.createdAt ?? new Date(),
+      updatedAt: cariHesap.updatedAt ?? new Date()
+    } as CariHesap;
   }
 
-  async updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | undefined> {
-    const [updated] = await this.getDbInstance()
+  async getAllCariHesaplar(): Promise<CariHesap[]> {
+    const result = await db.select().from(cariHesaplar).orderBy(desc(cariHesaplar.createdAt));
+    return result.map(item => ({
+      ...item,
+      isActive: item.isActive ?? true,
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as CariHesap[];
+  }
+
+  async getCariHesapById(id: number): Promise<CariHesap | null> {
+    const [cariHesap] = await db
+      .select()
+      .from(cariHesaplar)
+      .where(eq(cariHesaplar.id, id));
+    return cariHesap ? {
+      ...cariHesap,
+      isActive: cariHesap.isActive ?? true,
+      createdAt: cariHesap.createdAt ?? new Date(),
+      updatedAt: cariHesap.updatedAt ?? new Date()
+    } as CariHesap : null;
+  }
+
+  async updateCariHesap(id: number, data: Partial<InsertCariHesap>): Promise<CariHesap | null> {
+    const [updated] = await db
       .update(cariHesaplar)
       .set({
         ...data,
-        updatedAt: new Date(),
-        isActive: data.isActive ?? true
+        updatedAt: new Date()
       })
       .where(eq(cariHesaplar.id, id))
       .returning();
-
-    if (!updated) return undefined;
-
-    return {
-      id: updated.id,
-      firmaAdi: updated.firmaAdi,
-      firmaTuru: updated.firmaTuru,
-      subeBolge: updated.subeBolge,
-      vergiDairesi: updated.vergiDairesi,
-      vergiNo: updated.vergiNo,
-      adres: updated.adres,
-      telefon: updated.telefon,
-      email: updated.email,
-      notlar: updated.notlar,
+    return updated ? {
+      ...updated,
       isActive: updated.isActive ?? true,
       createdAt: updated.createdAt ?? new Date(),
       updatedAt: updated.updatedAt ?? new Date()
-    };
+    } as CariHesap : null;
   }
 
   async deleteCariHesap(id: number): Promise<boolean> {
-    const existing = this.cariHesaplar.get(id);
-    if (!existing) return false;
-
-    const updated: CariHesap = {
-      ...existing,
-      isActive: false,
-      updatedAt: new Date()
-    };
-    this.cariHesaplar.set(id, updated);
-    return true;
+    const [deleted] = await db
+      .delete(cariHesaplar)
+      .where(eq(cariHesaplar.id, id))
+      .returning();
+    return !!deleted;
   }
 
   async searchCariHesaplar(query: string): Promise<CariHesap[]> {
-    const lowerQuery = query.toLowerCase();
-    return Array.from(this.cariHesaplar.values())
-      .filter(c => 
-        c.isActive && (
-          c.firmaAdi.toLowerCase().includes(lowerQuery) ||
-          c.subeBolge?.toLowerCase().includes(lowerQuery) ||
-          c.telefon?.toLowerCase().includes(lowerQuery) ||
-          c.email?.toLowerCase().includes(lowerQuery)
+    const result = await db
+      .select()
+      .from(cariHesaplar)
+      .where(
+        or(
+          like(cariHesaplar.firmaAdi, `%${query}%`),
+          like(cariHesaplar.vergiNo, `%${query}%`)
         )
       )
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .orderBy(desc(cariHesaplar.createdAt));
+    return result.map(item => ({
+      ...item,
+      isActive: item.isActive ?? true,
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as CariHesap[];
   }
 
-  // Yetkili Kişiler CRUD
-  async getYetkiliKisilerByCariId(cariHesapId: number): Promise<YetkiliKisi[]> {
-    return Array.from(this.yetkiliKisiler.values())
-      .filter(y => y.cariHesapId === cariHesapId)
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-  }
-
+  // Yetkili Kişi işlemleri
   async createYetkiliKisi(data: InsertYetkiliKisi): Promise<YetkiliKisi> {
-    const valuesToInsert = {
-      ...removeUndefinedProps(data),
-      cariHesapId: data.cariHesapId,
-      adSoyad: data.adSoyad,
-    };
-    const [created] = await this.getDbInstance().insert(yetkiliKisiler).values(valuesToInsert).returning();
-    return {
-      ...created,
-      createdAt: created.createdAt ?? new Date(),
-      updatedAt: created.updatedAt ?? new Date()
-    };
+    const [yetkiliKisi] = await db.insert(yetkiliKisiler).values(data).returning();
+    return yetkiliKisi;
   }
 
-  async updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | undefined> {
-    const existing = this.yetkiliKisiler.get(id);
-    if (!existing) return undefined;
+  async getYetkiliKisilerByCariId(cariHesapId: number): Promise<YetkiliKisi[]> {
+    return db
+      .select()
+      .from(yetkiliKisiler)
+      .where(eq(yetkiliKisiler.cariHesapId, cariHesapId))
+      .orderBy(desc(yetkiliKisiler.createdAt));
+  }
 
-    const updated: YetkiliKisi = {
-      ...existing,
-      ...data,
-      updatedAt: new Date()
-    };
-    this.yetkiliKisiler.set(id, updated);
-    return updated;
+  async updateYetkiliKisi(id: number, data: Partial<InsertYetkiliKisi>): Promise<YetkiliKisi | null> {
+    const [updated] = await db
+      .update(yetkiliKisiler)
+      .set(data)
+      .where(eq(yetkiliKisiler.id, id))
+      .returning();
+    return updated || null;
   }
 
   async deleteYetkiliKisi(id: number): Promise<boolean> {
-    return this.yetkiliKisiler.delete(id);
+    const [deleted] = await db
+      .delete(yetkiliKisiler)
+      .where(eq(yetkiliKisiler.id, id))
+      .returning();
+    return !!deleted;
   }
 
-  // Cari Hareketler CRUD
-  async getCariHareketlerByCariId(cariHesapId: number, limit: number = 25): Promise<CariHareket[]> {
-    return Array.from(this.cariHareketler.values())
-      .filter(h => h.cariHesapId === cariHesapId)
-      .sort((a, b) => {
-        const dateA = a.tarih ? new Date(a.tarih).getTime() : 0;
-        const dateB = b.tarih ? new Date(b.tarih).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, limit);
-  }
-
+  // Cari Hareket işlemleri
   async createCariHareket(data: InsertCariHareket): Promise<CariHareket> {
-    const valuesToInsert = {
-      ...removeUndefinedProps(data),
-      cariHesapId: data.cariHesapId,
-      aciklama: data.aciklama,
-      tarih: data.tarih ?? new Date(),
-      tur: data.tur,
-      tutar: data.tutar,
-      bakiye: data.bakiye,
-    };
-    const [created] = await this.getDbInstance().insert(cariHareketler).values(valuesToInsert).returning();
-    return {
-      ...created,
-      tarih: created.tarih ?? new Date(),
-      createdAt: created.createdAt ?? new Date(),
-      updatedAt: created.updatedAt ?? new Date()
-    };
+    const [cariHareket] = await db.insert(cariHareketler).values(data).returning();
+    return cariHareket;
   }
 
-  // Teklifler CRUD
-  async getAllTeklifler(): Promise<Teklif[]> {
-    return Array.from(this.teklifler.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  async getCariHareketlerByCariId(cariHesapId: number): Promise<CariHareket[]> {
+    return db
+      .select()
+      .from(cariHareketler)
+      .where(eq(cariHareketler.cariHesapId, cariHesapId))
+      .orderBy(desc(cariHareketler.createdAt));
   }
 
-  async getTeklifById(id: number): Promise<Teklif | undefined> {
-    return this.teklifler.get(id);
+  async updateCariHareket(id: number, data: Partial<InsertCariHareket>): Promise<CariHareket | null> {
+    const [updated] = await db
+      .update(cariHareketler)
+      .set(data)
+      .where(eq(cariHareketler.id, id))
+      .returning();
+    return updated || null;
   }
 
+  async deleteCariHareket(id: number): Promise<boolean> {
+    const [deleted] = await db
+      .delete(cariHareketler)
+      .where(eq(cariHareketler.id, id))
+      .returning();
+    return !!deleted;
+  }
+
+  // Teklif işlemleri
   async createTeklif(data: InsertTeklif): Promise<Teklif> {
-    const id = this.currentIds.teklif++;
-    const now = new Date();
-    const teklif: Teklif = {
-      id,
-      cariHesapId: data.cariHesapId,
-      yetkiliKisiId: data.yetkiliKisiId || null,
-      teklifNo: data.teklifNo,
-      teklifTuru: data.teklifTuru,
-      teklifKonusu: data.teklifKonusu,
-      teklifDurumu: data.teklifDurumu,
-      odemeSekli: data.odemeSekli || null,
-      gecerlilikSuresi: data.gecerlilikSuresi || null,
-      paraBirimi: data.paraBirimi || null,
-      toplamTutar: data.toplamTutar,
-      notlar: data.notlar || null,
-      dosyalar: data.dosyalar || null,
-      tarih: now,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.teklifler.set(id, teklif);
-    return teklif;
+    const [teklif] = await db.insert(teklifler).values({
+      ...data,
+      tarih: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return {
+      ...teklif,
+      tarih: teklif.tarih ?? new Date(),
+      createdAt: teklif.createdAt ?? new Date(),
+      updatedAt: teklif.updatedAt ?? new Date()
+    } as Teklif;
   }
 
-  async updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | undefined> {
-    const existing = this.teklifler.get(id);
-    if (!existing) return undefined;
+  async getAllTeklifler(): Promise<Teklif[]> {
+    const result = await db.select().from(teklifler).orderBy(desc(teklifler.createdAt));
+    return result.map(item => ({
+      ...item,
+      tarih: item.tarih ?? new Date(),
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Teklif[];
+  }
 
-    const updated: Teklif = {
-      ...existing,
-      ...data,
-      updatedAt: new Date()
-    };
-    this.teklifler.set(id, updated);
-    return updated;
+  async getTeklifById(id: number): Promise<Teklif | null> {
+    const [teklif] = await db
+      .select()
+      .from(teklifler)
+      .where(eq(teklifler.id, id));
+    return teklif ? {
+      ...teklif,
+      tarih: teklif.tarih ?? new Date(),
+      createdAt: teklif.createdAt ?? new Date(),
+      updatedAt: teklif.updatedAt ?? new Date()
+    } as Teklif : null;
+  }
+
+  async updateTeklif(id: number, data: Partial<InsertTeklif>): Promise<Teklif | null> {
+    const [updated] = await db
+      .update(teklifler)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(teklifler.id, id))
+      .returning();
+    return updated ? {
+      ...updated,
+      tarih: updated.tarih ?? new Date(),
+      createdAt: updated.createdAt ?? new Date(),
+      updatedAt: updated.updatedAt ?? new Date()
+    } as Teklif : null;
   }
 
   async deleteTeklif(id: number): Promise<boolean> {
-    return this.teklifler.delete(id);
-  }
-
-  async getTekliflerByTur(tur: string): Promise<Teklif[]> {
-    return Array.from(this.teklifler.values())
-      .filter(t => t.teklifTuru === tur)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const [deleted] = await db
+      .delete(teklifler)
+      .where(eq(teklifler.id, id))
+      .returning();
+    return !!deleted;
   }
 
   async searchTeklifler(query: string): Promise<Teklif[]> {
-    const lowerQuery = query.toLowerCase();
-    return Array.from(this.teklifler.values())
-      .filter(t => 
-        t.teklifNo.toLowerCase().includes(lowerQuery) ||
-        t.teklifKonusu.toLowerCase().includes(lowerQuery)
+    const result = await db
+      .select()
+      .from(teklifler)
+      .where(
+        or(
+          like(teklifler.teklifNo, `%${query}%`),
+          like(teklifler.teklifKonusu, `%${query}%`)
+        )
       )
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .orderBy(desc(teklifler.createdAt));
+    return result.map(item => ({
+      ...item,
+      tarih: item.tarih ?? new Date(),
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Teklif[];
   }
 
-  // Teklif Kalemleri CRUD
-  async getTeklifKalemleriByTeklifId(teklifId: number): Promise<TeklifKalemi[]> {
-    return Array.from(this.teklifKalemleri.values())
-      .filter(k => k.teklifId === teklifId)
-      .sort((a, b) => a.id - b.id);
+  async getTekliflerByTur(tur: string): Promise<Teklif[]> {
+    const result = await db
+      .select()
+      .from(teklifler)
+      .where(eq(teklifler.teklifTuru, tur))
+      .orderBy(desc(teklifler.createdAt));
+    return result.map(item => ({
+      ...item,
+      tarih: item.tarih ?? new Date(),
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Teklif[];
   }
 
+  // Teklif Kalemi işlemleri
   async createTeklifKalemi(data: InsertTeklifKalemi): Promise<TeklifKalemi> {
-    const id = this.currentIds.teklifKalemi++;
-    const now = new Date();
-    const kalem: TeklifKalemi = {
-      id,
-      teklifId: data.teklifId,
-      urunHizmetAdi: data.urunHizmetAdi,
-      miktar: data.miktar,
-      birim: data.birim,
-      birimFiyat: data.birimFiyat,
-      tutar: data.tutar,
-      iskontoTutari: data.iskontoTutari || null,
-      netTutar: data.netTutar,
-      kdvOrani: data.kdvOrani,
-      toplamTutar: data.toplamTutar,
-      createdAt: now
-    };
-    this.teklifKalemleri.set(id, kalem);
-    return kalem;
-  }
-
-  async deleteTeklifKalemleriByTeklifId(teklifId: number): Promise<boolean> {
-    const toDelete = Array.from(this.teklifKalemleri.entries())
-      .filter(([_, kalem]) => kalem.teklifId === teklifId)
-      .map(([id, _]) => id);
-
-    toDelete.forEach(id => this.teklifKalemleri.delete(id));
-    return toDelete.length > 0;
-  }
-
-  // Projeler CRUD
-  async getAllProjeler(): Promise<Proje[]> {
-    return Array.from(this.projeler.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  async getProjeById(id: number): Promise<Proje | undefined> {
-    return this.projeler.get(id);
-  }
-
-  async createProje(data: InsertProje): Promise<Proje> {
-    const id = this.currentIds.proje++;
-    const now = new Date();
-    const proje: Proje = {
-      id,
-      cariHesapId: data.cariHesapId,
-      teklifId: data.teklifId || null,
-      projeNo: data.projeNo,
-      projeAdi: data.projeAdi,
-      projeDurumu: data.projeDurumu,
-      projeTarihi: data.projeTarihi,
-      sonTeslimTarihi: data.sonTeslimTarihi || null,
-      butce: data.butce || null,
-      harcananTutar: data.harcananTutar || null,
-      tamamlanmaOrani: data.tamamlanmaOrani || null,
-      sorumluKisi: data.sorumluKisi || null,
-      aciklama: data.aciklama || null,
-      notlar: data.notlar || null,
-      dosyalar: data.dosyalar || null,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.projeler.set(id, proje);
-    return proje;
-  }
-
-  async updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | undefined> {
-    const existing = this.projeler.get(id);
-    if (!existing) return undefined;
-
-    const updated: Proje = {
-      ...existing,
+    const [teklifKalemi] = await db.insert(teklifKalemleri).values({
       ...data,
+      createdAt: new Date()
+    }).returning();
+    return {
+      ...teklifKalemi,
+      createdAt: teklifKalemi.createdAt ?? new Date()
+    } as TeklifKalemi;
+  }
+
+  async getAllTeklifKalemleri(): Promise<TeklifKalemi[]> {
+    const result = await db.select().from(teklifKalemleri).orderBy(desc(teklifKalemleri.createdAt));
+    return result.map(item => ({
+      ...item,
+      createdAt: item.createdAt ?? new Date()
+    })) as TeklifKalemi[];
+  }
+
+  async getTeklifKalemiById(id: number): Promise<TeklifKalemi | null> {
+    const [teklifKalemi] = await db
+      .select()
+      .from(teklifKalemleri)
+      .where(eq(teklifKalemleri.id, id));
+    return teklifKalemi ? {
+      ...teklifKalemi,
+      createdAt: teklifKalemi.createdAt ?? new Date()
+    } as TeklifKalemi : null;
+  }
+
+  async updateTeklifKalemi(id: number, data: Partial<InsertTeklifKalemi>): Promise<TeklifKalemi | null> {
+    const [updated] = await db
+      .update(teklifKalemleri)
+      .set(data)
+      .where(eq(teklifKalemleri.id, id))
+      .returning();
+    return updated ? {
+      ...updated,
+      createdAt: updated.createdAt ?? new Date()
+    } as TeklifKalemi : null;
+  }
+
+  async deleteTeklifKalemi(id: number): Promise<boolean> {
+    const [deleted] = await db
+      .delete(teklifKalemleri)
+      .where(eq(teklifKalemleri.id, id))
+      .returning();
+    return !!deleted;
+  }
+
+  async getTeklifKalemleriByTeklifId(teklifId: number): Promise<TeklifKalemi[]> {
+    const result = await db
+      .select()
+      .from(teklifKalemleri)
+      .where(eq(teklifKalemleri.teklifId, teklifId))
+      .orderBy(teklifKalemleri.id);
+    return result.map(item => ({
+      ...item,
+      createdAt: item.createdAt ?? new Date()
+    })) as TeklifKalemi[];
+  }
+
+  // Proje işlemleri
+  async createProje(data: InsertProje): Promise<Proje> {
+    const [proje] = await db.insert(projeler).values({
+      ...data,
+      projeDurumu: data.projeDurumu as "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede",
+      createdAt: new Date(),
       updatedAt: new Date()
-    };
-    this.projeler.set(id, updated);
-    return updated;
+    }).returning();
+    return {
+      ...proje,
+      projeDurumu: proje.projeDurumu as "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede",
+      createdAt: proje.createdAt ?? new Date(),
+      updatedAt: proje.updatedAt ?? new Date()
+    } as Proje;
+  }
+
+  async getAllProjeler(): Promise<Proje[]> {
+    const result = await db.select().from(projeler).orderBy(desc(projeler.createdAt));
+    return result.map(item => ({
+      ...item,
+      projeDurumu: item.projeDurumu as "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede",
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Proje[];
+  }
+
+  async getProjeById(id: number): Promise<Proje | null> {
+    const [proje] = await db
+      .select()
+      .from(projeler)
+      .where(eq(projeler.id, id));
+    return proje ? {
+      ...proje,
+      projeDurumu: proje.projeDurumu as "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede",
+      createdAt: proje.createdAt ?? new Date(),
+      updatedAt: proje.updatedAt ?? new Date()
+    } as Proje : null;
+  }
+
+  async updateProje(id: number, data: Partial<InsertProje>): Promise<Proje | null> {
+    const [updated] = await db
+      .update(projeler)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(projeler.id, id))
+      .returning();
+    return updated ? {
+      ...updated,
+      projeDurumu: updated.projeDurumu as "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede",
+      createdAt: updated.createdAt ?? new Date(),
+      updatedAt: updated.updatedAt ?? new Date()
+    } as Proje : null;
   }
 
   async deleteProje(id: number): Promise<boolean> {
-    return this.projeler.delete(id);
-  }
-
-  async getProjelerByDurum(durum: string): Promise<Proje[]> {
-    return Array.from(this.projeler.values())
-      .filter(p => p.projeDurumu === durum)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const [deleted] = await db
+      .delete(projeler)
+      .where(eq(projeler.id, id))
+      .returning();
+    return !!deleted;
   }
 
   async searchProjeler(query: string): Promise<Proje[]> {
-    const lowerQuery = query.toLowerCase();
-    return Array.from(this.projeler.values())
-      .filter(p => 
-        p.projeNo.toLowerCase().includes(lowerQuery) ||
-        p.projeAdi.toLowerCase().includes(lowerQuery) ||
-        p.aciklama?.toLowerCase().includes(lowerQuery)
+    const result = await db
+      .select()
+      .from(projeler)
+      .where(
+        or(
+          like(projeler.projeNo, `%${query}%`),
+          like(projeler.projeAdi, `%${query}%`)
+        )
       )
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .orderBy(desc(projeler.createdAt));
+    return result.map(item => ({
+      ...item,
+      projeDurumu: item.projeDurumu as "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede",
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Proje[];
   }
 
-  // Görevler CRUD
-  async getAllGorevler(): Promise<Gorev[]> {
-    return Array.from(this.gorevler.values())
-      .sort((a, b) => {
-        const siraA = a.siralama || 0;
-        const siraB = b.siralama || 0;
-        if (siraA !== siraB) return siraA - siraB;
-        
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+  async getProjelerByDurum(durum: string): Promise<Proje[]> {
+    const result = await db
+      .select()
+      .from(projeler)
+      .where(eq(projeler.projeDurumu, durum))
+      .orderBy(desc(projeler.createdAt));
+    return result.map(item => ({
+      ...item,
+      projeDurumu: item.projeDurumu as "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede",
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Proje[];
   }
 
-  async getGorevById(id: number): Promise<Gorev | undefined> {
-    return this.gorevler.get(id);
-  }
-
+  // Görev işlemleri
   async createGorev(data: InsertGorev): Promise<Gorev> {
-    const insertData = {
-      baslik: data.baslik,
-      aciklama: data.aciklama ?? null,
-      durum: data.durum,
-      oncelik: data.oncelik,
-      baslangicTarihi: data.baslangicTarihi,
-      bitisTarihi: data.bitisTarihi ?? null,
-      sonTeslimTarihi: data.sonTeslimTarihi ?? null,
-      atananKisi: data.atananKisi ?? null,
-      cariHesapId: data.cariHesapId,
-      projeId: data.projeId ?? null,
-      userId: data.userId ?? null,
-      siralama: data.siralama ?? 0,
-      etiketler: data.etiketler ?? null,
-      dosyalar: data.dosyalar ?? null,
-    };
-    const [created] = await this.getDbInstance().insert(gorevler).values(insertData).returning();
+    const [gorev] = await db.insert(gorevler).values({
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
     return {
-      ...created,
-      createdAt: created.createdAt ?? new Date(),
-      updatedAt: created.updatedAt ?? new Date()
-    };
+      ...gorev,
+      createdAt: gorev.createdAt ?? new Date(),
+      updatedAt: gorev.updatedAt ?? new Date()
+    } as Gorev;
   }
 
-  async updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | undefined> {
-    const existing = this.gorevler.get(id);
-    if (!existing) return undefined;
+  async getAllGorevler(): Promise<Gorev[]> {
+    const result = await db.select().from(gorevler).orderBy(desc(gorevler.createdAt));
+    return result.map(item => ({
+      ...item,
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Gorev[];
+  }
 
-    const updated: Gorev = {
-      ...existing,
-      ...data,
-      updatedAt: new Date()
-    };
-    this.gorevler.set(id, updated);
-    return updated;
+  async getGorevById(id: number): Promise<Gorev | null> {
+    const [gorev] = await db
+      .select()
+      .from(gorevler)
+      .where(eq(gorevler.id, id));
+    return gorev ? {
+      ...gorev,
+      createdAt: gorev.createdAt ?? new Date(),
+      updatedAt: gorev.updatedAt ?? new Date()
+    } as Gorev : null;
+  }
+
+  async updateGorev(id: number, data: Partial<InsertGorev>): Promise<Gorev | null> {
+    const [updated] = await db
+      .update(gorevler)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(gorevler.id, id))
+      .returning();
+    return updated ? {
+      ...updated,
+      createdAt: updated.createdAt ?? new Date(),
+      updatedAt: updated.updatedAt ?? new Date()
+    } as Gorev : null;
   }
 
   async deleteGorev(id: number): Promise<boolean> {
-    return this.gorevler.delete(id);
-  }
-
-  async getGorevlerByDurum(durum: string): Promise<Gorev[]> {
-    return Array.from(this.gorevler.values())
-      .filter(g => g.durum === durum)
-      .sort((a, b) => {
-        const siraA = a.siralama || 0;
-        const siraB = b.siralama || 0;
-        if (siraA !== siraB) return siraA - siraB;
-        
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-  }
-
-  async getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]> {
-    return Array.from(this.gorevler.values())
-      .filter(g => g.cariHesapId === cariHesapId)
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-  }
-
-  async getGorevlerByProjeId(projeId: number): Promise<Gorev[]> {
-    return Array.from(this.gorevler.values())
-      .filter(g => g.projeId === projeId)
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+    const [deleted] = await db
+      .delete(gorevler)
+      .where(eq(gorevler.id, id))
+      .returning();
+    return !!deleted;
   }
 
   async searchGorevler(query: string): Promise<Gorev[]> {
-    const lowerQuery = query.toLowerCase();
-    return Array.from(this.gorevler.values())
-      .filter(g => 
-        g.baslik.toLowerCase().includes(lowerQuery) ||
-        g.aciklama?.toLowerCase().includes(lowerQuery) ||
-        g.atananKisi?.toLowerCase().includes(lowerQuery)
+    const result = await db
+      .select()
+      .from(gorevler)
+      .where(
+        or(
+          like(gorevler.baslik, `%${query}%`),
+          like(gorevler.aciklama, `%${query}%`)
+        )
       )
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      .orderBy(desc(gorevler.createdAt));
+    
+    return result.map(item => ({
+      ...item,
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Gorev[];
   }
 
-  async getDashboardStats(period: string = 'thisMonth'): Promise<any> {
-    const now = new Date();
-    let startDate: Date;
+  async getGorevlerByDurum(durum: string): Promise<Gorev[]> {
+    const result = await db
+      .select()
+      .from(gorevler)
+      .where(eq(gorevler.durum, durum))
+      .orderBy(desc(gorevler.createdAt));
+    return result.map(item => ({
+      ...item,
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Gorev[];
+  }
 
-    switch (period) {
-      case 'today':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
-      case 'thisWeek':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-        break;
-      case 'thisMonth':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'thisYear':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      default:
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  async getGorevlerByProjeId(projeId: number): Promise<Gorev[]> {
+    const result = await db
+      .select()
+      .from(gorevler)
+      .where(eq(gorevler.projeId, projeId))
+      .orderBy(desc(gorevler.createdAt));
+    return result.map(item => ({
+      ...item,
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Gorev[];
+  }
+
+  async getGorevlerByCariId(cariHesapId: number): Promise<Gorev[]> {
+    const result = await db
+      .select()
+      .from(gorevler)
+      .where(eq(gorevler.cariHesapId, cariHesapId))
+      .orderBy(desc(gorevler.createdAt));
+    return result.map(item => ({
+      ...item,
+      createdAt: item.createdAt ?? new Date(),
+      updatedAt: item.updatedAt ?? new Date()
+    })) as Gorev[];
+  }
+
+  // Dashboard işlemleri
+  async getDashboardStats(period: string = "week"): Promise<any> {
+    const startDate = new Date();
+    if (period === "month") {
+      startDate.setMonth(startDate.getMonth() - 1);
+    } else {
+      startDate.setDate(startDate.getDate() - 7);
     }
 
-    const cariHesaplarArray = Array.from(this.cariHesaplar.values());
-    const tekliflerArray = Array.from(this.teklifler.values())
-      .filter(t => t.createdAt && new Date(t.createdAt) >= startDate);
-    const projelerArray = Array.from(this.projeler.values())
-      .filter(p => p.createdAt && new Date(p.createdAt) >= startDate);
-    const gorevlerArray = Array.from(this.gorevler.values())
-      .filter(g => g.createdAt && new Date(g.createdAt) >= startDate);
+    const [[{ count: cariHesapCount }], [{ count: teklifCount }], [{ count: projeCount }], [{ count: gorevCount }]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(cariHesaplar)
+        .where(sql`created_at >= ${startDate}`),
+      db.select({ count: sql<number>`count(*)` }).from(teklifler)
+        .where(sql`created_at >= ${startDate}`),
+      db.select({ count: sql<number>`count(*)` }).from(projeler)
+        .where(sql`created_at >= ${startDate}`),
+      db.select({ count: sql<number>`count(*)` }).from(gorevler)
+        .where(sql`created_at >= ${startDate}`)
+    ]);
 
-    const stats = {
-      cariHesaplar: {
-        toplam: cariHesaplarArray.length,
-        tip: {
-          alici: cariHesaplarArray.filter(c => c.firmaTuru === 'Alıcı').length,
-          satici: cariHesaplarArray.filter(c => c.firmaTuru === 'Satıcı').length
-        }
-      },
-      teklifler: {
-        toplam: tekliflerArray.length,
-        durum: {
-          beklemede: tekliflerArray.filter(t => t.teklifDurumu === 'Beklemede').length,
-          onaylandi: tekliflerArray.filter(t => t.teklifDurumu === 'Onaylandı').length,
-          reddedildi: tekliflerArray.filter(t => t.teklifDurumu === 'Reddedildi').length
-        }
-      },
-      projeler: {
-        toplam: projelerArray.length,
-        durum: {
-          devamEdiyor: projelerArray.filter(p => p.projeDurumu === 'Devam Ediyor').length,
-          tamamlandi: projelerArray.filter(p => p.projeDurumu === 'Tamamlandı').length,
-          beklemede: projelerArray.filter(p => p.projeDurumu === 'Beklemede').length
-        }
-      },
-      gorevler: {
-        toplam: gorevlerArray.length,
-        durum: {
-          bekliyor: gorevlerArray.filter(g => g.durum === 'Bekliyor').length,
-          devamEdiyor: gorevlerArray.filter(g => g.durum === 'Devam Ediyor').length,
-          tamamlandi: gorevlerArray.filter(g => g.durum === 'Tamamlandı').length
-        }
-      }
+    return {
+      cariHesapCount: cariHesapCount || 0,
+      teklifCount: teklifCount || 0,
+      projeCount: projeCount || 0,
+      gorevCount: gorevCount || 0
     };
-
-    return stats;
   }
 
   async getRecentActivities(limit: number = 10): Promise<any> {
-    const activities = [];
-    
-    // Son eklenen görevler
-    const recentTasks = Array.from(this.gorevler.values())
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, limit)
-      .map(task => ({
-        type: 'task',
-        title: task.baslik,
-        date: task.createdAt,
-        status: task.durum
-      }));
-    
-    // Son eklenen teklifler
-    const recentQuotes = Array.from(this.teklifler.values())
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, limit)
-      .map(quote => ({
-        type: 'quote',
-        title: quote.teklifNo,
-        date: quote.createdAt,
-        status: quote.teklifDurumu
-      }));
-    
-    // Son eklenen projeler
-    const recentProjects = Array.from(this.projeler.values())
-      .sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, limit)
-      .map(project => ({
-        type: 'project',
-        title: project.projeAdi,
-        date: project.createdAt,
-        status: project.projeDurumu
-      }));
-    
-    // Tüm aktiviteleri birleştir, sırala ve limitle
-    return [...recentTasks, ...recentQuotes, ...recentProjects]
-      .sort((a, b) => {
-        const dateA = a.date ? new Date(a.date).getTime() : 0;
-        const dateB = b.date ? new Date(b.date).getTime() : 0;
-        return dateB - dateA;
-      })
+    const activities = await Promise.all([
+      db.select().from(cariHesaplar).limit(limit).orderBy(desc(cariHesaplar.createdAt)),
+      db.select().from(teklifler).limit(limit).orderBy(desc(teklifler.createdAt)),
+      db.select().from(projeler).limit(limit).orderBy(desc(projeler.createdAt)),
+      db.select().from(gorevler).limit(limit).orderBy(desc(gorevler.createdAt))
+    ]);
+
+    return activities.flat()
+      .filter(activity => activity.createdAt)
+      .sort((a, b) => 
+        (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0)
+      )
       .slice(0, limit);
   }
 
-  async getUpcomingTasks(limit: number = 5): Promise<Gorev[]> {
-    const now = new Date();
-    return Array.from(this.gorevler.values())
-      .filter(task => 
-        task.durum !== 'Tamamlandı' && 
-        task.baslangicTarihi && 
-        new Date(task.baslangicTarihi) > now
+  async getUpcomingTasks(limit: number = 5): Promise<any> {
+    const tasks = await db
+      .select()
+      .from(gorevler)
+      .where(
+        and(
+          sql`durum != 'Tamamlandı'`,
+          sql`son_teslim_tarihi >= CURRENT_DATE`
+        )
       )
-      .sort((a, b) => new Date(a.baslangicTarihi).getTime() - new Date(b.baslangicTarihi).getTime())
-      .slice(0, limit);
+      .orderBy(gorevler.sonTeslimTarihi)
+      .limit(limit);
+    
+    return tasks.map(task => ({
+      ...task,
+      createdAt: task.createdAt ?? new Date(),
+      updatedAt: task.updatedAt ?? new Date()
+    }));
+  }
+
+  // Yeni eklenen işlemler
+  async deleteTeklifKalemleriByTeklifId(teklifId: number): Promise<boolean> {
+    const [deleted] = await db
+      .delete(teklifKalemleri)
+      .where(eq(teklifKalemleri.teklifId, teklifId))
+      .returning();
+    return !!deleted;
   }
 }
 
-export const storage = new MemoryStorage();
+export const storage = new DatabaseStorage();

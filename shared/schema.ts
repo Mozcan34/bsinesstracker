@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, varchar, numeric, boolean, integer, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, varchar, boolean, integer, decimal } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Kullanıcılar tablosu
@@ -196,8 +196,8 @@ export type CariHesap = {
   email: string | null;
   notlar: string | null;
   isActive: boolean;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type YetkiliKisi = {
@@ -274,21 +274,25 @@ export type TeklifKalemi = {
 export type Proje = {
   id: number;
   cariHesapId: number;
-  teklifId: number | null;
+  teklifId?: number | null;
   projeNo: string;
   projeAdi: string;
-  projeDurumu: string;
+  projeDurumu: "Devam Ediyor" | "Tamamlandı" | "İptal" | "Beklemede";
   projeTarihi: Date;
-  sonTeslimTarihi: Date | null;
-  butce: string | null;
-  harcananTutar: string | null;
-  tamamlanmaOrani: number | null;
-  sorumluKisi: string | null;
-  aciklama: string | null;
-  notlar: string | null;
-  dosyalar: string[] | null;
+  sonTeslimTarihi?: Date | null;
+  butce?: string | null;
+  harcananTutar?: string | null;
+  tamamlanmaOrani?: number | null;
+  sorumluKisi?: string | null;
+  aciklama?: string | null;
+  notlar?: string | null;
+  dosyalar?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
+  cariHesap?: {
+    firmaAdi: string;
+    firmaTuru?: string;
+  };
 };
 
 export type Gorev = {
@@ -298,8 +302,8 @@ export type Gorev = {
   durum: string;
   oncelik: string;
   baslangicTarihi: Date;
-  bitisTarihi: Date | null;
-  sonTeslimTarihi: Date | null;
+  bitisTarihi?: Date | null;
+  sonTeslimTarihi?: Date | null;
   atananKisi: string | null;
   cariHesapId: number;
   projeId: number | null;
@@ -307,8 +311,8 @@ export type Gorev = {
   siralama: number | null;
   etiketler: string[] | null;
   dosyalar: string[] | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export const insertCariHareketSchema = z.object({

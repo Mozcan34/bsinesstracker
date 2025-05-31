@@ -34,41 +34,22 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
-
-interface Proje {
-  id: number;
-  projeNo: string;
-  projeAdi: string;
-  aciklama?: string;
-  cariHesapId: number;
-  cariHesap?: {
-    firmaAdi: string;
-  };
-  teklifId?: number;
-  projeTarihi: string;
-  sonTeslimTarihi?: string;
-  projeDurumu: string;
-  butce?: number;
-  harcananTutar?: number;
-  tamamlanmaOrani?: number;
-  sorumluKisi?: string;
-  createdAt: string;
-}
+import type { Proje } from "@shared/schema";
 
 const durum_colors = {
   "Devam Ediyor": "bg-blue-100 text-blue-800",
   "Tamamlandı": "bg-green-100 text-green-800",
   "İptal": "bg-red-100 text-red-800",
   "Beklemede": "bg-yellow-100 text-yellow-800",
-};
+} as const;
 
 export default function Projeler() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDurum, setSelectedDurum] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState("all");
+  const [selectedDurum, setSelectedDurum] = useState<Proje["projeDurumu"] | "all">("all");
+  const [activeTab, setActiveTab] = useState<Proje["projeDurumu"] | "all">("all");
 
-  const { data: projeler, isLoading } = useQuery({
+  const { data: projeler, isLoading } = useQuery<Proje[]>({
     queryKey: ["/api/projeler", selectedDurum === "all" ? undefined : selectedDurum, searchTerm],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -81,7 +62,7 @@ export default function Projeler() {
     },
   });
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = (newStatus: Proje["projeDurumu"] | "all") => {
     setSelectedDurum(newStatus);
     setActiveTab(newStatus);
   };
@@ -89,7 +70,7 @@ export default function Projeler() {
   const getStatusStats = () => {
     if (!projeler) return { all: 0, "Devam Ediyor": 0, "Tamamlandı": 0, "Beklemede": 0, "İptal": 0 };
 
-    const stats = projeler.reduce((acc: any, proje: Proje) => {
+    const stats = projeler.reduce((acc: Record<string, number>, proje: Proje) => {
       acc.all++;
       acc[proje.projeDurumu] = (acc[proje.projeDurumu] || 0) + 1;
       return acc;
@@ -111,18 +92,18 @@ export default function Projeler() {
 
   const stats = getStatusStats();
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('tr-TR');
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('tr-TR');
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY'
-    }).format(amount);
+    }).format(parseFloat(amount));
   };
 
-  const getDaysUntilDeadline = (deadline: string) => {
+  const getDaysUntilDeadline = (deadline: Date) => {
     const today = new Date();
     const deadlineDate = new Date(deadline);
     const diffTime = deadlineDate.getTime() - today.getTime();
@@ -224,19 +205,19 @@ export default function Projeler() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">Tümü ({stats.all})</TabsTrigger>
-          <TabsTrigger value="Devam Ediyor">Devam Eden ({stats["Devam Ediyor"]})</TabsTrigger>
-          <TabsTrigger value="Tamamlandı">Tamamlanan ({stats["Tamamlandı"]})</TabsTrigger>
-          <TabsTrigger value="Beklemede">Bekleyen ({stats["Beklemede"]})</TabsTrigger>
-          <TabsTrigger value="İptal">İptal ({stats["İptal"]})</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={handleStatusChange}>
+        <TabsList className="grid grid-cols-5 w-full">
+          <TabsTrigger value="all">Tümü</TabsTrigger>
+          <TabsTrigger value="Devam Ediyor">Devam Eden</TabsTrigger>
+          <TabsTrigger value="Tamamlandı">Tamamlanan</TabsTrigger>
+          <TabsTrigger value="Beklemede">Bekleyen</TabsTrigger>
+          <TabsTrigger value="İptal">İptal</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab} className="mt-6">
+        <TabsContent value={activeTab}>
           <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
+            <CardContent>
+              <div className="relative overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -244,10 +225,10 @@ export default function Projeler() {
                       <TableHead>Proje Adı</TableHead>
                       <TableHead>Firma</TableHead>
                       <TableHead>Durum</TableHead>
-                      <TableHead>Teslim Tarihi</TableHead>
-                      <TableHead>Sorumlu</TableHead>
+                      <TableHead>Başlangıç</TableHead>
+                      <TableHead>Teslim</TableHead>
                       <TableHead>İlerleme</TableHead>
-                      <TableHead>Bütçe</TableHead>
+                      <TableHead>Sorumlu</TableHead>
                       <TableHead className="text-right">İşlemler</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -277,69 +258,42 @@ export default function Projeler() {
                             </TableCell>
                             <TableCell>{proje.cariHesap?.firmaAdi}</TableCell>
                             <TableCell>
-                              <Badge className={`${durum_colors[proje.projeDurumu as keyof typeof durum_colors]} border-0`}>
+                              <Badge className={`${durum_colors[proje.projeDurumu]} border-0`}>
                                 {proje.projeDurumu}
                               </Badge>
                             </TableCell>
+                            <TableCell>{formatDate(proje.projeTarihi)}</TableCell>
                             <TableCell>
-                              {proje.sonTeslimTarihi ? (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  <span className={deadline !== null && deadline < 0 ? "text-red-600 font-medium" : deadline !== null && deadline <= 7 ? "text-orange-600 font-medium" : ""}>
-                                    {formatDate(proje.sonTeslimTarihi)}
-                                  </span>
+                              {proje.sonTeslimTarihi && (
+                                <div>
+                                  <div>{formatDate(proje.sonTeslimTarihi)}</div>
                                   {deadline !== null && deadline <= 7 && deadline >= 0 && (
-                                    <span className="text-xs text-orange-600">
-                                      ({deadline} gün)
-                                    </span>
+                                    <div className="text-xs text-orange-600">
+                                      {deadline} gün kaldı
+                                    </div>
                                   )}
                                   {deadline !== null && deadline < 0 && (
-                                    <span className="text-xs text-red-600">
-                                      ({Math.abs(deadline)} gün geçmiş)
-                                    </span>
+                                    <div className="text-xs text-red-600">
+                                      {Math.abs(deadline)} gün geçmiş
+                                    </div>
                                   )}
                                 </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {proje.sorumluKisi ? (
-                                <div className="flex items-center gap-1">
-                                  <User className="h-4 w-4 text-muted-foreground" />
-                                  <span>{proje.sorumluKisi}</span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
                               )}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="w-16 bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                  <div
+                                    className="bg-blue-600 h-2 rounded-full"
                                     style={{ width: `${proje.tamamlanmaOrani || 0}%` }}
-                                  ></div>
+                                  />
                                 </div>
-                                <span className="text-sm font-medium min-w-[3rem]">
+                                <span className="text-sm">
                                   {proje.tamamlanmaOrani || 0}%
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              {proje.butce ? (
-                                <div>
-                                  <div className="font-medium">{formatCurrency(proje.butce)}</div>
-                                  {proje.harcananTutar && (
-                                    <div className="text-sm text-muted-foreground">
-                                      Harcanan: {formatCurrency(proje.harcananTutar)}
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
+                            <TableCell>{proje.sorumluKisi || "-"}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-1 justify-end">
                                 <Button

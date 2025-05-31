@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,13 +26,14 @@ import {
 import { useParams, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import type { Proje } from "@shared/schema";
 
 const durum_colors = {
   "Devam Ediyor": "bg-blue-100 text-blue-800",
   "Tamamlandı": "bg-green-100 text-green-800",
   "İptal": "bg-red-100 text-red-800",
   "Beklemede": "bg-yellow-100 text-yellow-800",
-};
+} as const;
 
 export default function ProjeDetay() {
   const { id } = useParams();
@@ -41,8 +41,13 @@ export default function ProjeDetay() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: proje, isLoading } = useQuery({
+  const { data: proje, isLoading } = useQuery<Proje>({
     queryKey: [`/api/projeler/${id}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/projeler/${id}`);
+      if (!response.ok) throw new Error("Proje yüklenemedi");
+      return response.json();
+    },
   });
 
   const { data: gorevler } = useQuery({
@@ -55,7 +60,7 @@ export default function ProjeDetay() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async (newStatus: string) => {
+    mutationFn: async (newStatus: Proje["projeDurumu"]) => {
       const response = await fetch(`/api/projeler/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -85,22 +90,22 @@ export default function ProjeDetay() {
     },
   });
 
-  const handleStatusChange = (status: string) => {
+  const handleStatusChange = (status: Proje["projeDurumu"]) => {
     updateStatusMutation.mutate(status);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('tr-TR');
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('tr-TR');
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY'
-    }).format(amount);
+    }).format(parseFloat(amount));
   };
 
-  const getDaysUntilDeadline = (deadline: string) => {
+  const getDaysUntilDeadline = (deadline: Date) => {
     const today = new Date();
     const deadlineDate = new Date(deadline);
     const diffTime = deadlineDate.getTime() - today.getTime();
@@ -218,7 +223,7 @@ export default function ProjeDetay() {
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-2 mt-4 sm:mt-0">
-                  <Badge className={`${durum_colors[proje.projeDurumu as keyof typeof durum_colors]} border-0`}>
+                  <Badge className={`${durum_colors[proje.projeDurumu]} border-0`}>
                     {proje.projeDurumu}
                   </Badge>
                   <Select value={proje.projeDurumu} onValueChange={handleStatusChange}>
@@ -322,7 +327,7 @@ export default function ProjeDetay() {
                         </p>
                         {proje.butce && (
                           <p className="text-xs text-muted-foreground">
-                            Kalan: {formatCurrency(proje.butce - proje.harcananTutar)}
+                            Kalan: {formatCurrency((parseFloat(proje.butce) - parseFloat(proje.harcananTutar)).toString())}
                           </p>
                         )}
                       </div>

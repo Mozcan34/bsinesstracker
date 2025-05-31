@@ -13,12 +13,13 @@ import {
   teklifFormSchema,
   projeFormSchema,
   gorevFormSchema,
-  InsertCariHesap,
-  InsertTeklif,
-  InsertProje,
-  InsertGorev,
-  InsertYetkiliKisi,
-  InsertCariHareket
+  type InsertCariHesap,
+  type InsertTeklif,
+  type InsertProje,
+  type InsertGorev,
+  type InsertYetkiliKisi,
+  type InsertCariHareket,
+  type Proje
 } from "../shared/schema.js";
 import { z } from "zod";
 
@@ -212,21 +213,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === CARİ HAREKETLER ===
   
   // Cari hesaba ait hareketler
-  app.get("/api/cari-hesaplar/:cariId/hareketler", async (req: Request, res: Response) => {
+  app.get("/api/cari-hesaplar/:id/hareketler", async (req, res) => {
     try {
-      const cariId = parseInt(req.params.cariId);
-      if (isNaN(cariId)) {
-        return res.status(400).json({ message: "Geçersiz cari hesap ID" });
-      }
-
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
-      const hareketler = await storage.getCariHareketlerByCariId(cariId, limit);
+      const cariId = parseInt(req.params.id);
+      const hareketler = await storage.getCariHareketlerByCariId(cariId);
       res.json(hareketler);
     } catch (error: unknown) {
       if (error instanceof Error) {
         res.status(500).json({ error: error.message });
       } else {
-        res.status(500).json({ error: 'An unknown error occurred' });
+        res.status(500).json({ error: "Bilinmeyen bir hata oluştu" });
       }
     }
   });
@@ -406,27 +402,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Teklif sil
-  app.delete("/api/teklifler/:id", async (req: Request, res: Response) => {
+  app.delete("/api/teklifler/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Geçersiz ID" });
-      }
-
+      
       // Önce teklif kalemlerini sil
-      await storage.deleteTeklifKalemleriByTeklifId(id);
+      const kalemler = await storage.getTeklifKalemleriByTeklifId(id);
+      for (const kalem of kalemler) {
+        await storage.deleteTeklifKalemi(kalem.id);
+      }
       
       const deleted = await storage.deleteTeklif(id);
       if (!deleted) {
-        return res.status(404).json({ message: "Teklif bulunamadı" });
+        res.status(404).json({ error: "Teklif bulunamadı" });
+        return;
       }
-
-      res.status(204).send();
+      res.json({ success: true });
     } catch (error: unknown) {
       if (error instanceof Error) {
         res.status(500).json({ error: error.message });
       } else {
-        res.status(500).json({ error: 'An unknown error occurred' });
+        res.status(500).json({ error: "Bilinmeyen bir hata oluştu" });
       }
     }
   });
@@ -437,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projeler", async (req: Request, res: Response) => {
     try {
       const { durum, search } = req.query;
-      let projeler;
+      let projeler: Proje[];
       
       if (search && typeof search === "string") {
         projeler = await storage.searchProjeler(search);
@@ -522,14 +518,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Geçersiz ID" });
       }
 
-      const validatedData = projeFormSchema.partial().parse(req.body);
-      const proje = await storage.updateProje(id, validatedData as Partial<InsertProje>);
+      const validatedData = projeFormSchema.parse(req.body);
       
-      if (!proje) {
+      const updatedProje = await storage.updateProje(id, validatedData);
+      if (!updatedProje) {
         return res.status(404).json({ message: "Proje bulunamadı" });
       }
 
-      res.json(proje);
+      res.json(updatedProje);
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -622,22 +618,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Yeni görev oluştur
-  app.post("/api/gorevler", async (req: Request, res: Response) => {
+  app.post("/api/gorevler", async (req, res) => {
     try {
-      const validatedData = gorevFormSchema.parse(req.body);
-      const gorev = await storage.createGorev(validatedData);
+      const validatedData = gorevFormSchema.parse({
+        ...req.body,
+        sonTeslimTarihi: req.body.sonTeslimTarihi ? new Date(req.body.sonTeslimTarihi) : undefined,
+        baslangicTarihi: new Date(req.body.baslangicTarihi),
+        bitisTarihi: req.body.bitisTarihi ? new Date(req.body.bitisTarihi) : undefined
+      });
+
+      const gorevData: InsertGorev = {
+        ...validatedData,
+        sonTeslimTarihi: validatedData.sonTeslimTarihi ?? undefined,
+        bitisTarihi: validatedData.bitisTarihi ?? undefined,
+        userId: validatedData.userId ?? undefined
+      };
+
+      const gorev = await storage.createGorev(gorevData);
       res.status(201).json(gorev);
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Geçersiz veri", 
-          errors: error.errors 
-        });
-      }
-      if (error instanceof Error) {
+        res.status(400).json({ error: error.errors });
+      } else if (error instanceof Error) {
         res.status(500).json({ error: error.message });
       } else {
-        res.status(500).json({ error: 'An unknown error occurred' });
+        res.status(500).json({ error: "Bilinmeyen bir hata oluştu" });
       }
     }
   });

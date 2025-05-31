@@ -1,4 +1,3 @@
-import React from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { register } from "@/lib/queryClient";

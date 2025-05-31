@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,6 +34,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import type { Proje } from "@shared/schema";
 
 const projeFormSchema = z.object({
   projeAdi: z.string().min(1, "Proje adı gereklidir"),
@@ -65,17 +65,32 @@ export default function ProjeForm() {
   
   const isEditing = Boolean(id);
   
-  const { data: proje, isLoading: isLoadingProje } = useQuery({
+  const { data: proje, isLoading: isLoadingProje } = useQuery<Proje>({
     queryKey: [`/api/projeler/${id}`],
     enabled: isEditing,
+    queryFn: async () => {
+      const response = await fetch(`/api/projeler/${id}`);
+      if (!response.ok) throw new Error("Proje yüklenemedi");
+      return response.json();
+    },
   });
   
   const { data: cariHesaplar, isLoading: isLoadingCariHesaplar } = useQuery({
     queryKey: ["/api/cari-hesaplar"],
+    queryFn: async () => {
+      const response = await fetch("/api/cari-hesaplar");
+      if (!response.ok) throw new Error("Cari hesaplar yüklenemedi");
+      return response.json();
+    },
   });
   
   const { data: teklifler, isLoading: isLoadingTeklifler } = useQuery({
     queryKey: ["/api/teklifler"],
+    queryFn: async () => {
+      const response = await fetch("/api/teklifler");
+      if (!response.ok) throw new Error("Teklifler yüklenemedi");
+      return response.json();
+    },
   });
 
   const form = useForm<ProjeFormValues>({
@@ -106,8 +121,8 @@ export default function ProjeForm() {
         projeTarihi: new Date(proje.projeTarihi),
         sonTeslimTarihi: proje.sonTeslimTarihi ? new Date(proje.sonTeslimTarihi) : undefined,
         projeDurumu: proje.projeDurumu,
-        butce: proje.butce ? String(proje.butce) : "",
-        harcananTutar: proje.harcananTutar ? String(proje.harcananTutar) : "",
+        butce: proje.butce || "",
+        harcananTutar: proje.harcananTutar || "",
         tamamlanmaOrani: proje.tamamlanmaOrani ? String(proje.tamamlanmaOrani) : "0",
         sorumluKisi: proje.sorumluKisi || "",
         notlar: proje.notlar || "",
@@ -121,8 +136,8 @@ export default function ProjeForm() {
         ...data,
         cariHesapId: parseInt(data.cariHesapId),
         teklifId: data.teklifId ? parseInt(data.teklifId) : undefined,
-        butce: data.butce ? parseFloat(data.butce) : undefined,
-        harcananTutar: data.harcananTutar ? parseFloat(data.harcananTutar) : undefined,
+        butce: data.butce || undefined,
+        harcananTutar: data.harcananTutar || undefined,
         tamamlanmaOrani: data.tamamlanmaOrani ? parseInt(data.tamamlanmaOrani) : 0,
       };
       
@@ -161,8 +176,8 @@ export default function ProjeForm() {
         ...data,
         cariHesapId: parseInt(data.cariHesapId),
         teklifId: data.teklifId ? parseInt(data.teklifId) : undefined,
-        butce: data.butce ? parseFloat(data.butce) : undefined,
-        harcananTutar: data.harcananTutar ? parseFloat(data.harcananTutar) : undefined,
+        butce: data.butce || undefined,
+        harcananTutar: data.harcananTutar || undefined,
         tamamlanmaOrani: data.tamamlanmaOrani ? parseInt(data.tamamlanmaOrani) : 0,
       };
       
@@ -214,8 +229,8 @@ export default function ProjeForm() {
   }
 
   return (
-    <div className="space-y-6 pb-20 md:pb-6">
-      <div className="flex items-center mb-4">
+    <div className="space-y-6">
+      <div className="flex items-center">
         <Button 
           variant="ghost" 
           className="mr-2" 
@@ -228,12 +243,9 @@ export default function ProjeForm() {
           {isEditing ? "Proje Düzenle" : "Yeni Proje"}
         </h2>
       </div>
-      
+
       <Card>
-        <CardHeader>
-          <CardTitle>Proje Bilgileri</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -244,13 +256,13 @@ export default function ProjeForm() {
                     <FormItem>
                       <FormLabel>Proje Adı *</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Proje adını girin" />
+                        <Input placeholder="Proje adını girin" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="cariHesapId"
@@ -264,9 +276,12 @@ export default function ProjeForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {cariHesaplar?.map((cari: any) => (
-                            <SelectItem key={cari.id} value={String(cari.id)}>
-                              {cari.firmaAdi}
+                          {cariHesaplar?.map((cariHesap: any) => (
+                            <SelectItem 
+                              key={cariHesap.id} 
+                              value={cariHesap.id.toString()}
+                            >
+                              {cariHesap.firmaAdi}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -275,27 +290,7 @@ export default function ProjeForm() {
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="aciklama"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Açıklama</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Proje açıklamasını girin"
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="teklifId"
@@ -305,14 +300,17 @@ export default function ProjeForm() {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Teklif seçin (isteğe bağlı)" />
+                            <SelectValue placeholder="Teklif seçin" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Teklif Seçmeyin</SelectItem>
+                          <SelectItem value="">Seçim yok</SelectItem>
                           {teklifler?.map((teklif: any) => (
-                            <SelectItem key={teklif.id} value={String(teklif.id)}>
-                              {teklif.teklifNo} - {teklif.teklifKonusu}
+                            <SelectItem 
+                              key={teklif.id} 
+                              value={teklif.id.toString()}
+                            >
+                              {teklif.teklifNo} - {teklif.teklifAdi}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -324,48 +322,22 @@ export default function ProjeForm() {
 
                 <FormField
                   control={form.control}
-                  name="projeDurumu"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Proje Durumu *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Durum seçin" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Devam Ediyor">Devam Ediyor</SelectItem>
-                          <SelectItem value="Tamamlandı">Tamamlandı</SelectItem>
-                          <SelectItem value="Beklemede">Beklemede</SelectItem>
-                          <SelectItem value="İptal">İptal</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
                   name="projeTarihi"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Proje Tarihi *</FormLabel>
+                      <FormLabel>Başlangıç Tarihi *</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
-                              variant="outline"
+                              variant={"outline"}
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
                               {field.value ? (
-                                format(field.value, "dd MMMM yyyy", { locale: tr })
+                                format(field.value, "PPP", { locale: tr })
                               ) : (
                                 <span>Tarih seçin</span>
                               )}
@@ -395,19 +367,19 @@ export default function ProjeForm() {
                   name="sonTeslimTarihi"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Son Teslim Tarihi</FormLabel>
+                      <FormLabel>Teslim Tarihi</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
-                              variant="outline"
+                              variant={"outline"}
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
                               {field.value ? (
-                                format(field.value, "dd MMMM yyyy", { locale: tr })
+                                format(field.value, "PPP", { locale: tr })
                               ) : (
                                 <span>Tarih seçin</span>
                               )}
@@ -421,7 +393,7 @@ export default function ProjeForm() {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date < new Date()
+                              date < new Date("1900-01-01")
                             }
                             initialFocus
                           />
@@ -431,21 +403,56 @@ export default function ProjeForm() {
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="projeDurumu"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Proje Durumu *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Durum seçin" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Devam Ediyor">Devam Ediyor</SelectItem>
+                          <SelectItem value="Tamamlandı">Tamamlandı</SelectItem>
+                          <SelectItem value="Beklemede">Beklemede</SelectItem>
+                          <SelectItem value="İptal">İptal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="sorumluKisi"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sorumlu Kişi</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Sorumlu kişi adını girin" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="butce"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bütçe (₺)</FormLabel>
+                      <FormLabel>Bütçe</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          step="0.01"
+                        <Input 
+                          type="text"
                           placeholder="0.00"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -458,13 +465,12 @@ export default function ProjeForm() {
                   name="harcananTutar"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Harcanan Tutar (₺)</FormLabel>
+                      <FormLabel>Harcanan Tutar</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          step="0.01"
+                        <Input 
+                          type="text"
                           placeholder="0.00"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -479,12 +485,12 @@ export default function ProjeForm() {
                     <FormItem>
                       <FormLabel>Tamamlanma Oranı (%)</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
+                        <Input 
                           type="number"
                           min="0"
                           max="100"
                           placeholder="0"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -493,56 +499,54 @@ export default function ProjeForm() {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="sorumluKisi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sorumlu Kişi</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Sorumlu kişi adını girin" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="notlar"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notlar</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Ek notlar yazın"
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                  className="flex-1"
-                >
-                  {(createMutation.isPending || updateMutation.isPending) && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="aciklama"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Açıklama</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Proje açıklamasını girin"
+                          className="min-h-[100px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  {isEditing ? "Güncelle" : "Oluştur"}
-                </Button>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="notlar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notlar</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Proje ile ilgili notları girin"
+                          className="min-h-[100px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end gap-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate("/projeler")}
-                  className="flex-1"
                 >
                   İptal
+                </Button>
+                <Button type="submit">
+                  {isEditing ? "Güncelle" : "Oluştur"}
                 </Button>
               </div>
             </form>
